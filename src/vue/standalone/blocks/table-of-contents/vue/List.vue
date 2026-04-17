@@ -151,7 +151,7 @@ const props = defineProps({
 
 const rootStore = useRootStore()
 
-const blockAttributes = ref(window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId))
+const blockAttributes = ref(window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId) || {})
 
 const strings = {
 	tooltipHeader      : __('Edit HTML Anchor:', td),
@@ -283,7 +283,7 @@ const handleAnchorInput = (event) => {
 onMounted(() => {
 	nextTick(() => {
 		window.aioseoBus.$on('updateToc' + props.clientId, () => {
-			blockAttributes.value = window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId)
+			blockAttributes.value = window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId) || {}
 		})
 	})
 })

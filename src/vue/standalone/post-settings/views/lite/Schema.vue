@@ -61,7 +61,7 @@
 					<base-button
 						class="medium"
 						type="blue"
-						@click="modalOpen = true"
+						@click="schemaStore.modalOpen = true"
 					>
 						{{strings.generateSchema}}
 					</base-button>
@@ -69,15 +69,15 @@
 					<base-button
 						class="medium"
 						type="gray"
-						@click="modalOpen = true"
+						@click="schemaStore.modalOpen = true"
 					>
 						{{strings.validateSchema}}
 					</base-button>
 				</div>
 
 				<cta-modal
-					:show="modalOpen"
-					@close="modalOpen = false"
+					:show="schemaStore.modalOpen"
+					@close="schemaStore.modalOpen = false"
 					modal-name="schema-cta-modal"
 				/>
 			</template>
@@ -89,7 +89,8 @@
 import { GLOBAL_STRINGS } from '@/vue/plugins/constants'
 import links from '@/vue/utils/links'
 import {
-	usePostEditorStore
+	usePostEditorStore,
+	useSchemaStore
 } from '@/vue/stores'
 
 import { isPageBuilderEditor } from '@/vue/utils/context'
@@ -108,6 +109,7 @@ export default {
 	setup () {
 		return {
 			postEditorStore : usePostEditorStore(),
+			schemaStore     : useSchemaStore(),
 			GLOBAL_STRINGS,
 			links
 		}
@@ -125,8 +127,7 @@ export default {
 	},
 	data () {
 		return {
-			modalOpen : false,
-			strings   : {
+			strings : {
 				sidebarDescription  : __('Configure Schema Markup for your content. Search engines use structured data to display rich results in SERPs.', td),
 				noGraphs            : __('You have not added any schema yet. You can add any schema graphs you like via the Schema Generator below.', td),
 				schemaInUse         : __('Schema In Use', td),

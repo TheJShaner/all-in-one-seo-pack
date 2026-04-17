@@ -1,11 +1,11 @@
 import {
 	useRootStore
-} from '@/vue/stores'
+} from '$/vue/stores'
 
 const lang = () => {
 	const rootStore = useRootStore()
 
-	return rootStore.aioseo.user.locale.replace('_', '-') || 'en-US'
+	return (rootStore.aioseo?.user?.locale || rootStore.aioseoBrokenLinkChecker?.user?.locale || 'en-US').replace('_', '-')
 }
 
 // Format tokens and functions.

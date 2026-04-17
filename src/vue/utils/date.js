@@ -1,12 +1,12 @@
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import { __ } from '@/vue/plugins/translations'
 import { td } from '@/vue/plugins/constants'
 
-export function dateSqlToLocal (date, format = 'yyyy-MM-dd HH:mm:ss') {
-	return DateTime.fromSQL(date, { zone: 'utc' }).setZone(DateTime.local().zoneName).toFormat(format)
+export function dateSqlToLocal (date, format = 'YYYY-MM-DD HH:mm:ss') {
+	return dayjs.utc(date).tz(dayjs.tz.guess()).format(format)
 }
 export function dateSqlToLocalRelative (date) {
-	return DateTime.fromSQL(date, { zone: 'utc' }).setZone(DateTime.local().zoneName).toRelative()
+	return dayjs.utc(date).tz(dayjs.tz.guess()).fromNow()
 		.replace('a few seconds ago', __('a few seconds ago', td))
 		.replace('a minute ago', __('a minute ago', td))
 		.replace(
@@ -32,17 +32,17 @@ export function dateSqlToLocalRelative (date) {
 			__('years ago', td)
 		)
 }
-export function dateJsToLocal (date, format = 'yyyy-MM-dd HH:mm:ss') {
+export function dateJsToLocal (date, format = 'YYYY-MM-DD HH:mm:ss') {
 	if (!date) {
 		return null
 	}
 
-	return DateTime.fromJSDate(date).setZone(DateTime.local().zoneName).toFormat(format)
+	return dayjs(date).tz(dayjs.tz.guess()).format(format)
 }
 export function dateStringToLocalJs (date) {
 	if (!date) {
 		return null
 	}
 
-	return DateTime.fromJSDate(new Date(date)).setZone(DateTime.local().zoneName).toJSDate()
+	return dayjs(date).tz(dayjs.tz.guess()).toDate()
 }

@@ -85,7 +85,7 @@
 					size="large"
 					dateFormat="m/d/Y H:i:s"
 					:defaultValue="dateStringToLocalJs(page.lastModified)"
-					@change="value => editPage('lastModified', dateJsToLocal(value, 'MM/dd/yyyy HH:mm:ss'))"
+					@change="value => editPage('lastModified', dateJsToLocal(value, 'MM/DD/YYYY HH:mm:ss'))"
 					:isDisabledDate="isDisabledDate"
 				/>
 			</div>
@@ -223,7 +223,8 @@ import {
 	dateStringToLocalJs
 } from '@/vue/utils/date'
 
-import { DateTime } from 'luxon'
+import { parseCsvRow } from '@/vue/utils/csv'
+import dayjs from '@/vue/utils/dayjs'
 import { __, sprintf } from '@/vue/plugins/translations'
 import { getAssetUrl, isUrl, cloneObject } from '@/vue/utils/helpers'
 import csvFileImage from '@/vue/assets/images/sitemap/import-from-csv.png'
@@ -243,7 +244,7 @@ const defaults = {
 		url          : null,
 		priority     : { label: '0.7', value: '0.7' },
 		frequency    : { label: __('weekly', import.meta.env.VITE_TEXTDOMAIN), value: 'weekly' },
-		lastModified : DateTime.now().toFormat('MM/dd/yyyy')
+		lastModified : dayjs().format('MM/DD/YYYY')
 	}
 }
 
@@ -450,7 +451,7 @@ export default {
 			const preparedPage = cloneObject(defaults.page)
 
 			const dateFormats = [
-				'MM/dd/yyyy'
+				'MM/DD/YYYY'
 				// Add more formats if needed
 			]
 			page.forEach(prop => {
@@ -472,8 +473,8 @@ export default {
 
 					// Check for valid date format
 					dateFormats.forEach(format => {
-						const dateTime = DateTime.fromFormat(prop, format)
-						if (dateTime.isValid) {
+						const dateTime = dayjs(prop, format)
+						if (dateTime.isValid()) {
 							preparedPage.lastModified = prop
 						}
 					})
@@ -498,7 +499,7 @@ export default {
 
 				reader.onload = () => {
 					const csvString = reader.result
-					const rows      = csvString.split(/[\r\n]/).map(row => row.split(','))
+					const rows      = csvString.split(/[\r\n]/).map(row => parseCsvRow(row))
 
 					resolve(rows)
 				}
@@ -519,7 +520,7 @@ export default {
 			this.showImportModal = false
 		},
 		isDisabledDate (date) {
-			return date > DateTime.now()
+			return dayjs(date).isAfter(dayjs())
 		},
 		downloadSampleCSV () {
 			this.showDownloadSample = false

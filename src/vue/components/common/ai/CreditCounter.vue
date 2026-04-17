@@ -7,7 +7,7 @@
 		}"
 	>
 		<div class="counter-container-wrapper">
-			<svg-ai-credits />
+			<svg-ai-sparkles />
 
 			<div class="counter-container">
 				<div
@@ -19,7 +19,7 @@
 						:class="
 							{
 								'credit-count': true,
-								'low-credits': optionsStore.aiCreditPercentage <= 20
+								'low-credits': isLowCredits
 							}
 						"
 					>
@@ -48,8 +48,6 @@
 								<span class="credit-heading">{{ planCredits }}</span>
 
 								<div class="counter">
-									<svg-ai-credits />
-
 									<span
 										:class="{
 											'credit-count': true,
@@ -79,8 +77,6 @@
 								<span class="credit-heading">{{ strings.paygCredits }}</span>
 
 								<div class="counter">
-									<svg-ai-credits />
-
 									<span
 										:class="{
 											'credit-count': true,
@@ -106,11 +102,11 @@
 				</div>
 
 				<div
-					v-if="!isSettingsPage"
+					v-if="!isSettingsPage && (!showPurchaseOnlyWhenLow || isLowCredits)"
 					class="purchase-credits"
 				>
 					<base-button
-						v-if="optionsStore.aiCreditPercentage <= 20"
+						v-if="isLowCredits"
 						:class="{ 'aioseo-ai-content-settings-button': isSettingsPage }"
 						:size="isSettingsPage ? 'medium' : 'small'"
 						type="green"
@@ -152,12 +148,12 @@ import {
 import { getCurrentInstance, computed } from 'vue'
 import links from '@/vue/utils/links'
 
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import dateFormat from '@/vue/utils/dateFormat'
 
 import BaseButton from '@/vue/components/common/base/Button'
 import CoreTooltip from '@/vue/components/common/core/Tooltip'
-import SvgAiCredits from '@/vue/components/common/svg/ai/AiCredits'
+import SvgAiSparkles from '@/vue/components/common/svg/ai/Sparkles'
 import SvgCircleQuestionMark from '@/vue/components/common/svg/circle/QuestionMark'
 
 import { __, sprintf } from '@/vue/plugins/translations'
@@ -170,8 +166,8 @@ export default {
 		const optionsStore = useOptionsStore()
 
 		const orderExpiration = (order) => {
-			const expirationDate = DateTime.fromMillis(order.expires * 1000)
-			const expiration = dateFormat(expirationDate.toJSDate(), rootStore.aioseo.data.dateFormat)
+			const expirationDate = dayjs(order.expires * 1000)
+			const expiration = dateFormat(expirationDate.toDate(), rootStore.aioseo.data.dateFormat)
 
 			return sprintf(
 				// Translators: 1 - Number of credits, 2 - Date of expiration.
@@ -183,8 +179,8 @@ export default {
 			if (rootStore.aioseo.data.isNetworkLicensed) {
 				return __('These credits will reset when your license renews. Your license details can be found in the Network Admin area.', td)
 			}
-			const expirationDate = DateTime.fromMillis(optionsStore.internalOptions.internal?.license?.expires * 1000)
-			const expiration     = dateFormat(expirationDate.toJSDate(), rootStore.aioseo.data.dateFormat)
+			const expirationDate = dayjs(optionsStore.internalOptions.internal?.license?.expires * 1000)
+			const expiration     = dateFormat(expirationDate.toDate(), rootStore.aioseo.data.dateFormat)
 
 			return sprintf(
 				// Translators: 1 - Date of expiration.
@@ -206,7 +202,6 @@ export default {
 			optionsStore : optionsStore,
 			rootStore    : rootStore,
 			links,
-			DateTime,
 			orderExpiration,
 			licenseExpiration,
 			creditsText
@@ -215,7 +210,7 @@ export default {
 	components : {
 		BaseButton,
 		CoreTooltip,
-		SvgAiCredits,
+		SvgAiSparkles,
 		SvgCircleQuestionMark
 	},
 	props : {
@@ -224,6 +219,10 @@ export default {
 			default : 'metabox'
 		},
 		isSettingsPage : {
+			type    : Boolean,
+			default : false
+		},
+		showPurchaseOnlyWhenLow : {
 			type    : Boolean,
 			default : false
 		},
@@ -256,6 +255,9 @@ export default {
 		}
 	},
 	computed : {
+		isLowCredits () {
+			return 20 >= this.optionsStore.aiCreditPercentage
+		},
 		parsedTooltipOffset () {
 			return this.tooltipOffset || ('sidebar' === this.app.root.data.screenContext && 'metabox' === this.parentComponentContext ? '10px,0' : '50px,0')
 		},
@@ -350,9 +352,10 @@ export default {
 	}
 
 	svg {
-		&.aioseo-ai-credits {
-			width: 24px;
-			height: 24px;
+		&.aioseo-ai-sparkles {
+			color: $blue;
+			width: 20px;
+			height: 20px;
 			margin-right: 8px;
 		}
 
@@ -403,6 +406,7 @@ export default {
 
 				.credit-heading {
 					display: block;
+					font-size: 14px;
 					font-weight: bold;
 					margin-bottom: 8px;
 				}

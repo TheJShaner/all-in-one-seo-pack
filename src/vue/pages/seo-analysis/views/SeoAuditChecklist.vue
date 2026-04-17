@@ -10,7 +10,7 @@
 		</core-card>
 
 		<core-card
-			v-if="((rootStore.isPro && licenseStore.licenseKey) || optionsStore.internalOptions.internal.siteAnalysis.connectToken) && homeResults?.score"
+			v-if="((rootStore.isPro && sensitiveOptionsStore.hasLicenseKey) || sensitiveOptionsStore.hasSiteAnalysisConnectToken) && homeResults?.score"
 			slug="completeSeoChecklist"
 			no-slide
 			:toggles="false"
@@ -80,7 +80,8 @@ import {
 	useLicenseStore,
 	useOptionsStore,
 	useRootStore,
-	useSettingsStore
+	useSettingsStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import CoreCard from '@/vue/components/common/core/Card'
@@ -98,11 +99,12 @@ const td = import.meta.env.VITE_TEXTDOMAIN
 export default {
 	setup () {
 		return {
-			analyzerStore : useAnalyzerStore(),
-			licenseStore  : useLicenseStore(),
-			optionsStore  : useOptionsStore(),
-			rootStore     : useRootStore(),
-			settingsStore : useSettingsStore()
+			analyzerStore         : useAnalyzerStore(),
+			licenseStore          : useLicenseStore(),
+			optionsStore          : useOptionsStore(),
+			rootStore             : useRootStore(),
+			settingsStore         : useSettingsStore(),
+			sensitiveOptionsStore : useSensitiveOptionsStore()
 		}
 	},
 	components : {

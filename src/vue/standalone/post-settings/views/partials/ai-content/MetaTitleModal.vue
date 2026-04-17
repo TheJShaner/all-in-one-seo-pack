@@ -47,10 +47,10 @@
 
 								<core-alert
 									class="aioseo-ai-content-no-content-warning"
-									v-if="postContentLength < 500"
+									v-if="!aiContent.hasEnoughContent()"
 									type="red"
 								>
-									{{ strings.noContentWarning }}
+									{{ aiContent.strings.noContentWarning }}
 								</core-alert>
 
 								<style-form optionsKey="metaTitle" />
@@ -84,11 +84,11 @@
 					size="small"
 					type="gray"
 					@click="event => generate(true)"
-					:disabled="!aiContent.hasEnoughCredits(5) || postContentLength < 500"
+					:disabled="!aiContent.hasEnoughCredits(aiContent.getRephraseCost()) || !aiContent.hasEnoughContent()"
 				>
 					<svg-rephrase />
 
-					{{ strings.rephrase }}
+					{{ aiContent.strings.rephrase }}
 				</base-button>
 
 				<credit-counter parent-component-context="modal" />
@@ -102,7 +102,7 @@
 					type="gray"
 					@click="event => currentScreen = 'results'"
 				>
-					<span>{{ strings.viewPreviousResults }}</span>
+					<span>{{ aiContent.strings.viewPreviousResults }}</span>
 				</base-button>
 
 				<base-button
@@ -111,7 +111,7 @@
 					size="small"
 					type="blue"
 					@click="_event => generate(false)"
-					:disabled="!aiContent.hasEnoughCredits(aiContent.getFeatureCost('titles')) || postContentLength < 500"
+					:disabled="!aiContent.hasEnoughCredits(aiContent.getFeatureCost('titles')) || !aiContent.hasEnoughContent()"
 				>
 					{{ strings.generateButtonText }}
 				</base-button>
@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 import { useAiContent } from '@/vue/composables/AiContent'
 import {
@@ -129,7 +129,8 @@ import {
 	usePostEditorStore
 } from '@/vue/stores'
 
-import BaseCheckbox from '@/vue/components/common/base/Checkbox'
+import { getPostEditedContent } from '@/vue/plugins/tru-seo/components/postContent'
+
 import CoreAlert from '@/vue/components/common/core/alert/Index'
 import CoreModal from '@/vue/components/common/core/modal/Index'
 import CreditCounter from '@/vue/components/common/ai/CreditCounter'
@@ -141,12 +142,8 @@ import StyleForm from './StyleForm.vue'
 
 import SvgArrowBack from '@/vue/components/common/svg/ArrowBack'
 import SvgClose from '@/vue/components/common/svg/Close'
-import SvgCircleCheckSolid from '@/vue/components/common/svg/circle/CheckSolid'
-import SvgFaq from '@/vue/components/common/svg/ai/Faq'
 import SvgMetaTitle from '@/vue/components/common/svg/ai/MetaTitle'
 import SvgRephrase from '@/vue/components/common/svg/ai/Rephrase'
-
-import { getPostEditedContent } from '@/vue/plugins/tru-seo/components/postContent'
 
 import { __, sprintf } from '@/vue/plugins/translations'
 const td = import.meta.env.VITE_TEXTDOMAIN
@@ -160,13 +157,18 @@ export default {
 		const currentScreen   = ref(postEditorStore.currentPost.ai.titles.length ? 'results' : 'settings')
 		const error           = ref(false)
 
-		const postContentLength = computed(() => getPostEditedContent().length)
-
 		const generate = async (rephrase = false) => {
 			error.value         = false
 			currentScreen.value = 'loading'
 
-			aiStore.generateMetaTitles(rephrase).then(() => {
+			aiStore.generateMetaTitles({
+				rephrase     : rephrase,
+				postId       : postEditorStore.currentPost.id,
+				postContent  : getPostEditedContent(),
+				titles       : postEditorStore.currentPost.ai.titles,
+				focusKeyword : postEditorStore.currentPost.keyphrases?.focus?.keyphrase || ''
+			}).then(response => {
+				postEditorStore.currentPost.ai.titles = response.body.titles
 				currentScreen.value = 'results'
 			}).catch(() => {
 				currentScreen.value = 'settings'
@@ -180,10 +182,7 @@ export default {
 				// Translators: 1 - Number of credits.
 				__('Generate SEO Titles (%1$d credits)', td),
 				aiContent.getFeatureCost('titles')
-			),
-			rephrase            : __('Regenerate (5 credits)', td),
-			viewPreviousResults : __('View Previous Results', td),
-			noContentWarning    : __('Your post is too short to generate AI content. Please add more content. For the best results, we recommend adding at least 200 words.', td)
+			)
 		}
 
 		const loaders = [
@@ -203,12 +202,10 @@ export default {
 			error,
 			generate,
 			strings,
-			loaders,
-			postContentLength
+			loaders
 		}
 	},
 	components : {
-		BaseCheckbox,
 		CoreAlert,
 		CoreModal,
 		CreditCounter,
@@ -217,8 +214,6 @@ export default {
 		StyleForm,
 		SvgArrowBack,
 		SvgClose,
-		SvgCircleCheckSolid,
-		SvgFaq,
 		SvgMetaTitle,
 		SvgRephrase,
 		TitlesDescriptions

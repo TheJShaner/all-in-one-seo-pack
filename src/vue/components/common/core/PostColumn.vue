@@ -62,20 +62,18 @@
 					:disabled="showEditTitle"
 				>
 					<div class="edit-row edit-title">
-						<strong>{{ strings.title }}</strong>
-
-						<span v-if="!showEditTitle">
-							<strong>:</strong>
-							{{ truncate(titleParsed, 100) }}
-						</span>
+						<strong>{{ strings.title }}:</strong>
 
 						<core-loader v-if="postLoading" dark />
 
 						<svg-pencil
 							v-if="!showEditTitle"
-							class="pencil-icon"
 							@click.prevent="editTitle"
 						/>
+
+						<span v-if="!showEditTitle">
+							{{ truncate(titleParsed, 100) }}
+						</span>
 					</div>
 
 					<template #tooltip>
@@ -123,23 +121,21 @@
 					:disabled="showEditDescription"
 				>
 					<div class="edit-row edit-description">
-						<strong>{{ strings.description }}</strong>
-
-						<span
-							v-if="!showEditDescription"
-							:id="`aioseo-${columnName}-${postId}-value`"
-						>
-							<strong>:</strong>
-							{{ truncate(descriptionParsed) }}
-						</span>
+						<strong>{{ strings.description }}:</strong>
 
 						<core-loader v-if="postLoading" dark />
 
 						<svg-pencil
 							v-if="!showEditDescription"
-							class="pencil-icon"
 							@click.prevent="editDescription"
 						/>
+
+						<span
+							v-if="!showEditDescription"
+							:id="`aioseo-${columnName}-${postId}-value`"
+						>
+							{{ truncate(descriptionParsed) }}
+						</span>
 					</div>
 
 					<template #tooltip>
@@ -188,21 +184,19 @@
 					:disabled="showEditImageTitle"
 				>
 					<div class="edit-row edit-image-title">
-						<strong>{{ strings.imageTitle }}</strong>
+						<strong>{{ strings.imageTitle }}:</strong>
+
+						<svg-pencil
+							v-if="!showEditImageTitle"
+							@click.prevent="editImageTitle"
+						/>
 
 						<span
 							v-if="!showEditImageTitle"
 							:id="`aioseo-${columnName}-${postId}-value`"
 						>
-							<strong>:</strong>
 							{{ imageTitle }}
 						</span>
-
-						<svg-pencil
-							v-if="!showEditImageTitle"
-							class="pencil-icon"
-							@click.prevent="editImageTitle"
-						/>
 					</div>
 
 					<template #tooltip>
@@ -250,21 +244,21 @@
 					:disabled="showEditImageAltTag"
 				>
 					<div class="edit-row edit-image-alt">
-						<strong>{{ strings.imageAltTag }}</strong>
+						<strong>{{ strings.imageAltTag }}:</strong>
 
-						<span
-							v-if="!showEditImageAltTag"
-							:id="`aioseo-${columnName}-${postId}-value`"
-						>
-							<strong>:</strong>
-							{{ imageAltTag }}
-						</span>
+						<core-loader v-if="generatingAlt" dark />
 
 						<svg-pencil
-							v-if="!showEditImageAltTag"
-							class="pencil-icon"
+							v-if="!showEditImageAltTag && !generatingAlt"
 							@click.prevent="editImageAlt"
 						/>
+
+						<span
+							v-if="!showEditImageAltTag && !generatingAlt"
+							:id="`aioseo-${columnName}-${postId}-value`"
+						>
+							{{ imageAltTag }}
+						</span>
 					</div>
 
 					<template #tooltip>
@@ -310,6 +304,7 @@
 
 <script>
 import {
+	useAiStore,
 	useOptionsStore,
 	useRootStore,
 	useSearchStatisticsStore
@@ -348,6 +343,7 @@ export default {
 		} = useTruSeoScore()
 
 		return {
+			aiStore               : useAiStore(),
 			composableStrings     : strings,
 			optionsStore          : useOptionsStore(),
 			rootStore             : useRootStore(),
@@ -368,15 +364,13 @@ export default {
 		SvgPencil
 	},
 	props : {
-		post  : Object,
-		posts : Array
+		post : Object
 	},
 	data () {
 		return {
 			allowed,
 			postId                  : null,
 			columnName              : null,
-			value                   : null,
 			title                   : null,
 			titleParsed             : null,
 			postDescription         : null,
@@ -392,6 +386,7 @@ export default {
 			inspectionResult        : {},
 			inspectionResultLoading : true,
 			postLoading             : false,
+			generatingAlt           : false,
 			strings                 : merge(this.composableStrings, {
 				title          : __('Title', td),
 				description    : __('Description', td),
@@ -401,8 +396,7 @@ export default {
 				discardChanges : __('Discard Changes', td),
 				truSeoScore    : __('TruSEO Score', td),
 				headlineScore  : __('Headline Score', td)
-			}),
-			license
+			})
 		}
 	},
 	computed : {
@@ -490,7 +484,6 @@ export default {
 				})
 		},
 		cancel () {
-			this.value               = this.post.value
 			this.showEditTitle       = false
 			this.showEditDescription = false
 			this.showEditImageTitle  = false
@@ -522,6 +515,60 @@ export default {
 			title.innerText = value
 			title.prepend(image)
 		},
+		getRowActionLink () {
+			const row = document.getElementById(`post-${this.postId}`)
+
+			return row ? row.querySelector('.aioseo_generate_alt a') : null
+		},
+		setRowActionGenerating (generating) {
+			const link = this.getRowActionLink()
+			if (!link) {
+				return
+			}
+
+			if (generating) {
+				link.dataset.originalText = link.textContent
+				link.textContent = link.dataset.originalText + '…'
+				link.style.cursor = 'wait'
+				link.style.opacity = '0.5'
+			} else {
+				link.textContent = link.dataset.originalText || link.textContent
+				link.style.cursor = ''
+				link.style.opacity = ''
+			}
+		},
+		async generateAltInline () {
+			if (this.generatingAlt || this.showEditImageAltTag) {
+				return
+			}
+
+			this.generatingAlt = true
+			this.setRowActionGenerating(true)
+
+			try {
+				const response = await this.aiStore.generateImageAlt({ attachmentId: this.postId })
+				const altText  = response.body.altTexts[0]
+
+				const request = () => http.post(links.restUrl('posts-list/update-details-column'))
+					.send({
+						postId      : this.postId,
+						isMedia     : true,
+						imageAltTag : altText,
+						imageTitle  : this.imageTitle || ''
+					})
+
+				// Retry once if the request fails due to a temporary error (network issues, etc.).
+				await request().catch(() => request())
+
+				this.imageAltTag      = altText
+				this.post.imageAltTag = altText
+			} catch (error) {
+				console.error('Failed to generate alt text:', error)
+			} finally {
+				this.generatingAlt = false
+				this.setRowActionGenerating(false)
+			}
+		},
 		updateInspectionResult (post) {
 			const { inspectionResult, inspectionResultLoading } = post
 
@@ -532,7 +579,6 @@ export default {
 	mounted () {
 		this.postId                  = this.post.id
 		this.columnName              = this.post.columnName
-		this.value                   = this.post.value
 		this.imageTitle              = this.post.imageTitle
 		this.imageAltTag             = this.post.imageAltTag
 		this.isSpecialPage           = this.post.isSpecialPage
@@ -550,11 +596,13 @@ export default {
 		}
 
 		window.aioseoBus.$on('updateInspectionResult' + this.postId, this.updateInspectionResult)
+		window.aioseoBus.$on('generateAltInline' + this.postId, this.generateAltInline)
 	},
 	beforeUnmount () {
 		window.aioseoBus.$off('updateInspectionResult' + this.postId, this.updateInspectionResult)
+		window.aioseoBus.$off('generateAltInline' + this.postId, this.generateAltInline)
 	},
-	async created () {
+	created () {
 		this.showTruSeo = shouldShowTruSeoScore()
 	}
 }
@@ -562,29 +610,13 @@ export default {
 
 <style lang="scss">
 .aioseo-details-column {
-	float: left;
 	display: block;
-	opacity: 1;
 	overflow: hidden;
 	width: 100%;
 
 	&.editing {
 		max-height: initial;
 		overflow: visible;
-	}
-
-	.dashicons {
-		cursor: pointer;
-	}
-
-	.aioseo-quickedit {
-		margin-right: 5px;
-		color: #72777c;
-
-		&:hover {
-			color: #0073aa;
-			outline: 0;
-		}
 	}
 
 	&__tooltip {
@@ -601,9 +633,17 @@ export default {
 		&.edit-description,
 		&.edit-image-title,
 		&.edit-image-alt {
-			display: flex;
+			display: grid;
+			grid-template-columns: repeat(3, auto);
+			align-items: center;
+			column-gap: 4px;
 
-			span {
+			> strong {
+				white-space: nowrap;
+			}
+
+			> span {
+				grid-column: 1 / -1;
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
@@ -613,17 +653,10 @@ export default {
 				position: relative;
 				width: 18px;
 				height: 18px;
-				margin-left: 5px;
-				vertical-align: middle;
 			}
 
 			.aioseo-pencil {
-				margin-left: 5px;
-				padding-left: 2px;
-				flex: 0 0 16px;
 				opacity: 0;
-				display: inline-block;
-				vertical-align: middle;
 				cursor: pointer;
 				color: $black;
 				width: 16px;

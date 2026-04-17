@@ -56,8 +56,6 @@
 			@set-url="setUrl"
 		/>
 
-		<slot name="source-url-description" v-if="!log404" />
-
 		<transition-slide
 			:active="showOptions"
 			class="source-url-options"
@@ -120,7 +118,6 @@ import {
 	useRootStore
 } from '@/vue/stores'
 
-import { debounce } from '@/vue/utils/debounce'
 import { sanitizeString } from '@/vue/utils/strings'
 import { makeUrlRelative } from '@/vue/utils/urls'
 
@@ -198,6 +195,7 @@ export default {
 			showResults : false,
 			isLoading   : false,
 			showOptions : false,
+			searchTimer : null,
 			strings     : {
 				ignoreSlash : __('Ignore Slash', td),
 				ignoreCase  : __('Ignore Case', td),
@@ -232,7 +230,7 @@ export default {
 			if ('http' !== this.url.url.substr(0, 4) && '/' !== this.url.url.substr(0, 1) && 0 < this.url.url.length && !this.url.regex) {
 				warnings.push(sprintf(
 					// Translators: 1 - Adds a html tag with an option like: <code>^/</code>
-					__('The source URL should probably start with a %1$s', td),
+					__('We recommend starting the source URL with a %1$s', td),
 					'<code>/</code>'
 				))
 			}
@@ -244,7 +242,7 @@ export default {
 			if (!this.log404 && this.maybeRegex && !this.url.regex) {
 				warnings.push(sprintf(
 					// Translators: 1 - Adds a html tag with an option like: <code>Regex</code>
-					__('Remember to enable the %1$s option if this is a regular expression.', td),
+					__('Possible regex character detected. Remember to enable the %1$s option under the advanced settings (gear icon) if this is a regular expression.', td),
 					'<code>Regex</code>'
 				))
 			}
@@ -270,7 +268,7 @@ export default {
 				if (0 === this.url.url.indexOf('^') && -1 === this.url.url.indexOf('^/')) {
 					warnings.push(sprintf(
 						// Translators: 1 - Adds a html tag with an option like: <code>^/</code>
-						__('The source URL should probably start with a %1$s', td),
+						__('We recommend starting the source URL with a %1$s', td),
 						'<code>^/</code>'
 					))
 				}
@@ -350,25 +348,27 @@ export default {
 			}
 
 			this.isLoading = true
-			debounce(() => {
+			if (this.searchTimer) {
+				clearTimeout(this.searchTimer)
+			}
+
+			this.searchTimer = setTimeout(() => {
 				if (!this.url.url) {
-					this.isLoading = false
+					this.isLoading   = false
 					this.showResults = false
-					this.results = []
+					this.results     = []
 					return
 				}
 
 				this.showResults = true
 
 				this.ajaxSearch(this.url.url)
-					.then(() => (this.isLoading = false))
+					.finally(() => (this.isLoading = false))
 			}, 500)
 		},
-		ajaxSearch (query) {
-			return this.redirectsStore.getPosts({ query })
-				.then((response) => {
-					this.results = response.body.objects
-				})
+		async ajaxSearch (query) {
+			const response = await this.redirectsStore.getPosts({ query })
+			this.results   = response.body.objects
 		},
 		setUrl (url) {
 			this.showResults = false

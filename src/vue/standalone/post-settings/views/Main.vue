@@ -74,11 +74,20 @@
 
 				<alert v-if="'sidebar' === screenContext" />
 
-				<component
-					:is="turnSlugIntoComponent(activeTab)"
-					:parent-component-context="'sidebar' === screenContext ? 'sidebar' : 'metabox'"
-					@changeTab="newTab => processChangeTab(newTab)"
-				/>
+				<Suspense>
+					<template #default>
+						<component
+							:is="turnSlugIntoComponent(activeTab)"
+							:parent-component-context="'sidebar' === screenContext ? 'sidebar' : 'metabox'"
+							@changeTab="newTab => processChangeTab(newTab)"
+						/>
+					</template>
+					<template #fallback>
+						<div class="aioseo-loading-placeholder">
+							<core-loader dark />
+						</div>
+					</template>
+				</Suspense>
 			</div>
 		</transition>
 
@@ -106,7 +115,7 @@
 </template>
 
 <script setup>
-import { computed, getCurrentInstance, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, getCurrentInstance, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import {
 	useAiAssistantStore,
@@ -131,20 +140,12 @@ import {
 	extendBlockEditorInserterButton
 } from '@/vue/standalone/blocks/extend-paragraph-block'
 
-import Advanced from './Advanced'
-import AiContent from './AiContent'
 import Alert from './partials/Alert'
+import CoreLoader from '@/vue/components/common/core/Loader'
 import CoreMainTabs from '@/vue/components/common/core/main/Tabs'
 import CoreModal from '@/vue/components/common/core/modal/Index'
-import General from './General'
-import KeywordRankTracker from './KeywordRankTracker'
-import LinkAssistant from './Links'
 import ModalContent from './ModalContent'
-import Redirects from './Redirects'
-import Schema from './Schema'
-import SeoRevisions from './SeoRevisions'
 import SeoRevisionsCountBadge from './pro/partials-seo-revisions/CountBadge'
-import Social from './Social'
 import SvgAiContent from '@/vue/components/common/svg/ai/AiContent'
 import SvgBackup from '@/vue/components/common/svg/Backup'
 import SvgBuild from '@/vue/components/common/svg/Build'
@@ -156,6 +157,16 @@ import SvgReceipt from '@/vue/components/common/svg/Receipt'
 import SvgRedirectCrossedArrows from '@/vue/components/common/svg/redirect/CrossedArrows'
 import SvgSettings from '@/vue/components/common/svg/Settings'
 import SvgShare from '@/vue/components/common/svg/Share'
+
+const Advanced            = defineAsyncComponent(() => import('./Advanced'))
+const KeywordRankTracker  = defineAsyncComponent(() => import('./KeywordRankTracker'))
+const AiContent           = defineAsyncComponent(() => import('./AiContent'))
+const General             = defineAsyncComponent(() => import('./General'))
+const LinkAssistant       = defineAsyncComponent(() => import('./Links'))
+const Redirects           = defineAsyncComponent(() => import('./Redirects'))
+const Schema              = defineAsyncComponent(() => import('./Schema'))
+const SeoRevisions        = defineAsyncComponent(() => import('./SeoRevisions'))
+const Social              = defineAsyncComponent(() => import('./Social'))
 
 const td = import.meta.env.VITE_TEXTDOMAIN
 
@@ -500,6 +511,25 @@ onMounted(async () => {
 			}
 		})
 	}
+
+	// Preload tab components in the background after the initial render.
+	const preload = () => {
+		import('./General')
+		import('./Social')
+		import('./Schema')
+		import('./Advanced')
+		import('./AiContent')
+		import('./Links')
+		import('./Redirects')
+		import('./SeoRevisions')
+		import('./KeywordRankTracker')
+	}
+
+	if ('requestIdleCallback' in window) {
+		window.requestIdleCallback(preload)
+	} else {
+		setTimeout(preload, 1000)
+	}
 })
 
 onBeforeUnmount(() => {
@@ -552,6 +582,14 @@ switch (screenContext.value) {
 </script>
 
 <style lang="scss">
+.aioseo-loading-placeholder {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 300px;
+	padding: 40px;
+}
+
 .aioseo-app.aioseo-post-settings,
 .aioseo-metabox .aioseo-app.aioseo-post-settings {
 	background: #fff;

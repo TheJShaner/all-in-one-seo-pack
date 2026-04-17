@@ -1,6 +1,7 @@
 import aiAssistantIcon from '@/vue/standalone/blocks/ai-assistant/icon'
 
 import { __ } from '@/vue/plugins/translations'
+import { getEditorDocument } from '@/vue/utils/editor'
 
 import { Button } from '@wordpress/components'
 import { createElement, createRoot, flushSync } from '@wordpress/element'
@@ -204,9 +205,11 @@ export const extendBlockEditorInserterButton = ({ aiAssistantStore }) => {
 		return
 	}
 
+	const editorDoc       = getEditorDocument()
 	const blockEditor     = select('core/block-editor')
 	const selectedBlock   = blockEditor.getSelectedBlock()
-	const $existingButton = $editor.querySelector('.aioseo-ai-assistant-inserter-btn')
+	const $existingButton = $editor.querySelector('.aioseo-ai-assistant-inserter-btn') ||
+		editorDoc.querySelector('.aioseo-ai-assistant-inserter-btn')
 
 	// Remove the button immediately if the selected block is not a root-level paragraph block.
 	if (!isRootLevelParagraphBlock(selectedBlock, blockEditor)) {
@@ -215,12 +218,17 @@ export const extendBlockEditorInserterButton = ({ aiAssistantStore }) => {
 	}
 
 	setTimeout(() => {
-		// Don't add the button if it already exists.
-		if ($editor.querySelector('.aioseo-ai-assistant-inserter-btn')) {
+		// Don't add the button if it already exists (check both parent and iframe contexts).
+		if (
+			$editor.querySelector('.aioseo-ai-assistant-inserter-btn') ||
+			editorDoc.querySelector('.aioseo-ai-assistant-inserter-btn')
+		) {
 			return
 		}
 
-		const $addBlockButton = $editor.querySelector('.block-editor-inserter__toggle')
+		// In WP 7.0+, the inserter toggle lives inside the editor iframe.
+		const $addBlockButton = $editor.querySelector('.block-editor-inserter__toggle') ||
+			editorDoc.querySelector('.block-editor-inserter__toggle')
 		if (!$addBlockButton || $addBlockButton.closest('.is-vertical')) {
 			return
 		}

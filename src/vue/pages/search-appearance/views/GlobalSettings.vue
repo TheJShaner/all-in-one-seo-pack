@@ -352,7 +352,7 @@
 						size="large"
 						dateFormat="m/d/Y"
 						:defaultValue="dateStringToLocalJs(optionsStore.options.searchAppearance.global.schema.foundingDate)"
-						@change="value => optionsStore.options.searchAppearance.global.schema.foundingDate = dateJsToLocal(value, 'yyyy-MM-dd')"
+						@change="value => optionsStore.options.searchAppearance.global.schema.foundingDate = dateJsToLocal(value, 'YYYY-MM-DD')"
 					/>
 				</template>
 			</core-settings-row>

@@ -5,6 +5,7 @@ import {
 
 import { __ } from '@/vue/plugins/translations'
 import { html } from '@/vue/standalone/blocks/utils'
+import { getEditorDocument } from '@/vue/utils/editor'
 
 import aiAssistantIcon from '@/vue/standalone/blocks/ai-assistant/icon'
 
@@ -121,7 +122,8 @@ export const extendImageBlockPlaceholder = () => {
 		return
 	}
 
-	const $block     = document.getElementById(`block-${selectedBlock.clientId}`)
+	const editorDoc  = getEditorDocument()
+	const $block     = editorDoc.getElementById(`block-${selectedBlock.clientId}`)
 	const $targetBtn = $block?.querySelector('.components-form-file-upload')
 	if (
 		!$targetBtn ||

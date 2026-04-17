@@ -13,6 +13,7 @@ import { Sidebar } from './vue/Sidebar'
 
 import { deepCopy, cleanHtml } from '@/vue/standalone/blocks/utils'
 import { observeElement } from '@/vue/utils/helpers'
+import { getEditorDocument } from '@/vue/utils/editor'
 import { cleanForSlug } from '@/vue/utils/cleanForSlug'
 
 import { flattenHeadings, MODES } from './helpers'
@@ -358,14 +359,15 @@ export const edit = ({ setAttributes, attributes, clientId, className, isSelecte
 
 	const renderVueComponents = () => {
 		const targetElementId = `aioseo-${clientId}`
-		const targetElement = document.getElementById(targetElementId)
+		const editorDoc = getEditorDocument()
+		const targetElement = editorDoc.getElementById(targetElementId)
 
 		// The hasInitialized value is unique to this instance. Check if it's new.
 		// When a page is loaded with an existing block, check that the DOM has loaded the editors block HTML.
 		// When a block is first added, the DOM check would have already come back false. But isSelected will be true.
 		if (
 			(!hasInitialized.includes(clientId) || (targetElement && !targetElement.firstChild)) &&
-				(isSelected || document.querySelector(`[data-block="${clientId}"]`))
+				(isSelected || editorDoc.querySelector(`[data-block="${clientId}"]`))
 		) {
 			if (!hasInitialized.includes(clientId)) {
 				hasInitialized.push(clientId)

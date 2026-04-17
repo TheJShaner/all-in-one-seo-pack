@@ -13,6 +13,7 @@ export const useTagsStore = defineStore('TagsStore', {
 			taxonomy_title         : null,
 			taxonomy_description   : null,
 			custom_field           : [],
+			featured_image_url     : null,
 			permalink              : null,
 			attachment_caption     : null,
 			attachment_description : null,
@@ -60,6 +61,16 @@ export const useTagsStore = defineStore('TagsStore', {
 		},
 		updateCategories (payload) {
 			this.liveTags.categories = payload
+		},
+		updateFeaturedImageUrl (payload) {
+			this.liveTags.featured_image_url = payload
+
+			if (!payload) {
+				const tag = this.tags.find((tag) => 'featured_image_url' === tag.id)
+				if (tag) {
+					tag.value = ''
+				}
+			}
 		},
 		updateWooCommerceBrand (payload) {
 			this.liveTags.woocommerce_brand = payload

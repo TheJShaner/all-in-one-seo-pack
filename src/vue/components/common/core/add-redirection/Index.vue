@@ -17,9 +17,9 @@
 		<div class="urls">
 			<div class="source">
 				<div class="aioseo-settings-row no-border no-margin small-padding">
-					<div class="settings-name">
+					<div class="settings-name source-url">
 						<div class="name small-margin">
-							{{ sourceUrl }}
+							{{ sourceUrlLabel }}
 						</div>
 					</div>
 
@@ -32,26 +32,25 @@
 						:target-url="targetUrl"
 						:log404="log404"
 						:disableSource="sourceDisabled"
-					>
-						<template
-							#source-url-description
-							v-if="edit && !sourceDisabled"
-						>
-							<div
-								class="aioseo-description source-description"
-								v-html="strings.sourceUrlDescription"
-							/>
-						</template>
-					</core-add-redirection-url>
+					/>
 
-					<base-button
-						v-if="!edit && !log404 && !sourceDisabled"
-						size="small"
-						type="gray"
-						@click="addUrl"
-					>
-						{{ strings.addUrl }}
-					</base-button>
+					<div class="aioseo-description source-description">
+						<span v-html="strings.sourceUrlDescription" />
+
+						{{ ' ' }}<span v-if="!edit && !log404 && !sourceDisabled">
+							{{ strings.youCanAlso }}
+
+							<a
+								href="#"
+								class="add-source-url"
+								@click.prevent="addUrl"
+							>
+								<svg-circle-plus />
+
+								{{ strings.addUrl }}
+							</a>
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -113,7 +112,7 @@
 			</div>
 
 			<template
-				v-if="!edit && !log404 && !sourceDisabled"
+				v-if="false"
 			>
 				<div class="break" />
 
@@ -128,91 +127,73 @@
 			</template>
 		</div>
 
-		<hr class="aioseo-add-redirection__separator" />
+		<div class="redirect-options">
+			<div class="redirect-options__comment">
+				<span class="redirect-options__label">{{ strings.comment }}</span>
 
-		<div
-			class="aioseo-add-redirection__settings"
-			:class="{ advanced : showAdvancedSettings }"
-		>
-			<base-toggle
-				:modelValue="showAdvancedSettings"
-				@update:modelValue="value => showAdvancedSettings = !showAdvancedSettings"
-			/>
-
-			<span>{{ strings.advancedSettings }}</span>
-		</div>
-
-		<hr
-			v-if="!showAdvancedSettings"
-			class="aioseo-add-redirection__separator"
-		/>
-
-		<div
-			v-if="showAdvancedSettings"
-			class="settings advanced"
-		>
-			<div class="all-settings">
-				<div class="all-aioseo-settings-content">
-					<div class="redirect-type">
-						<span class="redirect-type__label">{{ strings.redirectType }}</span>
-
-						<base-select
-							:options="REDIRECT_TYPES"
-							v-model="redirectType"
-							size="medium"
-						/>
-					</div>
-
-					<transition-slide
-						class="advanced-settings"
-						:active="showAdvancedSettings"
-					>
-						<div class="query-params">
-							<div class="query-params__label">
-								<span>{{ strings.queryParams }}</span>
-
-								<core-tooltip>
-									<svg-circle-question-mark />
-
-									<template #tooltip>
-										{{ strings.queryParamsTooltip }}
-									</template>
-								</core-tooltip>
-							</div>
-
-							<base-select
-								:options="redirectQueryParams"
-								v-model="queryParam"
-								size="medium"
-							/>
-						</div>
-					</transition-slide>
-
-					<a
-						v-if="!showAdvancedSettings"
-						class="advanced-settings-link"
-						href="#"
-						@click.prevent="showAdvancedSettings = !showAdvancedSettings"
-					>{{ strings.advancedSettings }}</a>
-				</div>
+				<base-input
+					v-model="comment"
+					maxlength="80"
+					:placeholder="strings.commentPlaceholder"
+					size="medium"
+				/>
 			</div>
 
-			<transition-slide
-				class="advanced-settings"
-				:active="showAdvancedSettings"
-			>
-				<custom-rules
-					:key="customRules"
-					:edit-custom-rules="customRules"
-					@redirects-custom-rule-error="value => customRulesError = value"
+			<div class="redirect-options__type">
+				<span class="redirect-options__label">{{ strings.redirectType }}</span>
+
+				<base-select
+					:options="REDIRECT_TYPES"
+					v-model="redirectType"
+					size="medium"
 				/>
-			</transition-slide>
+			</div>
+
+			<div class="redirect-options__query">
+				<div class="redirect-options__label">
+					<span>{{ strings.queryParams }}</span>
+
+					<core-tooltip
+						placement="left"
+						flip
+					>
+						<svg-circle-question-mark />
+
+						<template #tooltip>
+							{{ strings.queryParamsTooltip }}
+						</template>
+					</core-tooltip>
+				</div>
+
+				<base-select
+					:options="redirectQueryParams"
+					v-model="queryParam"
+					size="medium"
+				/>
+			</div>
 		</div>
 
-		<div
-			class="aioseo-add-redirection__actions"
-			:class="{ advanced : showAdvancedSettings }"
-		>
+		<div class="custom-rules-toggle">
+			<a
+				href="#"
+				class="custom-rules-toggle__link"
+				:class="{ active: showCustomRules }"
+				@click.prevent="showCustomRules = !showCustomRules"
+			>
+				<svg-circle-plus />
+
+				{{ showCustomRules ? strings.hideCustomRules : strings.addCustomRules }}
+			</a>
+		</div>
+
+		<transition-slide :active="showCustomRules">
+			<custom-rules
+				:edit-custom-rules="redirectCustomRules"
+				@redirects-custom-rule-error="value => customRulesError = value"
+			/>
+		</transition-slide>
+
+		<div class="aioseo-add-redirection__actions">
 			<base-button
 				size="medium"
 				type="blue"
@@ -220,14 +201,14 @@
 				:loading="addingRedirect"
 				:disabled="saveIsDisabled"
 			>
-				{{ edit ? strings.saveChanges : addRedirect }}
+				{{ edit ? strings.saveChanges : addRedirectLabel }}
 			</base-button>
 
 			<base-button
 				v-if="edit"
 				size="medium"
 				type="gray"
-				@click="$emit('cancel', true)"
+				@click="emit('cancel', true)"
 				class="cancel-edit-row"
 			>
 				{{ strings.cancel }}
@@ -236,7 +217,9 @@
 	</div>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+
 import {
 	REDIRECT_QUERY_PARAMS,
 	REDIRECT_TYPES
@@ -257,12 +240,14 @@ import { useUrl } from '@/vue/composables/Url'
 
 import BaseButton from '@/vue/components/common/base/Button'
 import BaseSelect from '@/vue/components/common/base/Select'
+import BaseInput from '@/vue/components/common/base/Input'
 import CoreAddRedirectionTargetUrl from '@/vue/components/common/core/add-redirection/TargetUrl'
 import CoreAddRedirectionUrl from '@/vue/components/common/core/add-redirection/Url'
 import CoreAlert from '@/vue/components/common/core/alert/Index'
 import CustomRules from './CustomRules'
 import CoreTooltip from '@/vue/components/common/core/Tooltip'
 import SvgRightArrow from '@/vue/components/common/svg/right-arrow/Index'
+import SvgCirclePlus from '@/vue/components/common/svg/circle/Plus'
 import SvgCircleQuestionMark from '@/vue/components/common/svg/circle/QuestionMark'
 import TransitionSlide from '@/vue/components/common/transition/Slide'
 
@@ -270,504 +255,541 @@ import { __, sprintf } from '@/vue/plugins/translations'
 
 const td = import.meta.env.VITE_TEXTDOMAIN
 
-export default {
-	emits : [ 'cancel', 'added-redirect' ],
-	setup () {
-		const {
-			getJsonValue
-		} = useJsonValues()
-
-		const {
-			redirectHasUnPublishedPost
-		} = useRedirect()
-
-		const {
-			decodeUrl
-		} = useUrl()
-
-		return {
-			getJsonValue,
-			redirectHasUnPublishedPost,
-			decodeUrl,
-			redirectsStore : useRedirectsStore()
+const props = defineProps({
+	edit          : Boolean,
+	log404        : Boolean,
+	disableSource : Boolean,
+	url           : Object,
+	urls          : Array,
+	target        : String,
+	type          : Number,
+	query         : String,
+	slash         : Boolean,
+	case          : Boolean,
+	rules         : {
+		type : Array,
+		default () {
+			return []
 		}
 	},
-	components : {
-		BaseButton,
-		BaseSelect,
-		CoreAddRedirectionTargetUrl,
-		CoreAddRedirectionUrl,
-		CoreAlert,
-		CustomRules,
-		SvgRightArrow,
-		SvgCircleQuestionMark,
-		TransitionSlide,
-		CoreTooltip
+	postId          : Number,
+	postStatus      : String,
+	redirectComment : String
+})
+
+const emit = defineEmits([ 'cancel', 'added-redirect' ])
+
+const { getJsonValue } = useJsonValues()
+const { redirectHasUnPublishedPost } = useRedirect()
+const { decodeUrl } = useUrl()
+
+const redirectsStore = useRedirectsStore()
+
+// Reactive state
+const genericError      = ref(false)
+const addingRedirect    = ref(false)
+const targetUrlErrors   = ref([])
+const targetUrlWarnings = ref([])
+const customRulesError  = ref(false)
+const showCustomRules   = ref(false)
+const sourceDisabled    = ref(false)
+const editing           = ref(false)
+const editingRedirect   = ref({
+	sourceUrls   : [],
+	targetUrl    : null,
+	redirectType : null,
+	queryParam   : null,
+	customRules  : [],
+	comment      : ''
+})
+
+const strings = {
+	redirectType         : __('Redirect Type', td),
+	targetUrl            : __('Target URL', td),
+	targetUrlDescription : __('Enter a URL or search for a page.', td),
+	addUrl               : __('add extra source URLs.', td),
+	youCanAlso           : __('You can also', td),
+	sourceUrlDescription : sprintf(
+		// Translators: 1 - Opening link tag, 2 - Closing link tag.
+		__('Enter a relative URL or search for a page. The gear icon enables advanced options such as regex (%1$s).', td),
+		links.getDocLink(__('what\'s this?', td), 'redirectManagerRegex')
+	),
+	queryParams               : __('Query Parameters', td),
+	queryParamsTooltip        : __('Query parameters are the parameters that are passed to the target URL. You can ignore all parameters, ignore exact parameters, or include all parameters.', td),
+	saveChanges               : __('Save Changes', td),
+	cancel                    : __('Cancel', td),
+	genericErrorMessage       : __('An error occurred while adding your redirects. Please try again later.', td),
+	sourceUrlSetOncePublished : __('source url set once post is published', td),
+	comment                   : __('Comment', td),
+	commentPlaceholder        : __('I added this redirect to...', td),
+	advancedSettings          : __('Advanced Settings', td),
+	addCustomRules            : __('Add Custom Rules', td),
+	hideCustomRules           : __('Hide Custom Rules', td)
+}
+
+// Computed properties with getters/setters
+const sourceUrls = computed({
+	get () {
+		return editing.value ? editingRedirect.value.sourceUrls : redirectsStore.addNewRedirect.sourceUrls
 	},
-	props : {
-		edit          : Boolean,
-		log404        : Boolean,
-		disableSource : Boolean,
-		url           : Object,
-		urls          : Array,
-		target        : String,
-		type          : Number,
-		query         : String,
-		slash         : Boolean,
-		case          : Boolean,
-		rules         : {
-			type : Array,
-			default () {
-				return []
-			}
-		},
-		postId     : Number,
-		postStatus : String
-	},
-	data () {
-		return {
-			REDIRECT_TYPES,
-			genericError      : false,
-			addingRedirect    : false,
-			targetUrlErrors   : [],
-			targetUrlWarnings : [],
-			customRulesError  : false,
-			strings           : {
-				redirectType         : __('Redirect Type', td),
-				targetUrl            : __('Target URL', td),
-				targetUrlDescription : __('Enter a URL or start by typing a page or post title, slug or ID.', td),
-				addUrl               : __('Add URL', td),
-				sourceUrlDescription : sprintf(
-					// Translators: 1 - Oening link tag, 2 - Closing link tag.
-					__('Enter a relative URL to redirect from or start by typing in page or post title, slug or ID. You can also use regex (%1$s)', td),
-					links.getDocLink(__('what\'s this?', td), 'redirectManagerRegex')
-				),
-				advancedSettings          : __('Advanced Settings', td),
-				queryParams               : __('Query Parameters', td),
-				queryParamsTooltip        : __('Query parameters are the parameters that are passed to the target URL. You can ignore all parameters, ignore exact parameters, or include all parameters.', td),
-				saveChanges               : __('Save Changes', td),
-				cancel                    : __('Cancel', td),
-				genericErrorMessage       : __('An error occurred while adding your redirects. Please try again later.', td),
-				sourceUrlSetOncePublished : __('source url set once post is published', td)
-			},
-			sourceDisabled  : false,
-			editing         : false,
-			editingRedirect : {
-				sourceUrls           : [],
-				targetUrl            : null,
-				redirectType         : null,
-				queryParam           : null,
-				customRules          : [],
-				showAdvancedSettings : false
-			}
+	set (value) {
+		if (editing.value) {
+			editingRedirect.value.sourceUrls = value
+		} else {
+			redirectsStore.addNewRedirect.sourceUrls = value
 		}
+	}
+})
+
+const targetUrl = computed({
+	get () {
+		return editing.value ? editingRedirect.value.targetUrl : redirectsStore.addNewRedirect.targetUrl
 	},
-	watch : {
-		sourceUrls : {
-			deep : true,
-			handler () {
-				debounce(() => this.checkForDuplicates(), 500)
-			}
+	set (value) {
+		if (editing.value) {
+			editingRedirect.value.targetUrl = value
+		} else {
+			redirectsStore.addNewRedirect.targetUrl = value
 		}
+	}
+})
+
+const redirectType = computed({
+	get () {
+		return editing.value ? editingRedirect.value.redirectType : redirectsStore.addNewRedirect.redirectType
 	},
-	computed : {
-		isUsingAdvancedSettings () {
-			return this.redirectType?.value !== this.getDefaultRedirectType?.value ||
-				this.queryParam?.value !== this.getDefaultQueryParam?.value ||
-				(0 < this.customRules.length && this.customRules.some(rule => 0 < rule.value?.length))
-		},
-		sourceUrls : {
-			get () {
-				return this.editing ? this.editingRedirect.sourceUrls : this.redirectsStore.addNewRedirect.sourceUrls
-			},
-			set (value) {
-				this.editing ? this.editingRedirect.sourceUrls = value : this.redirectsStore.addNewRedirect.sourceUrls = value
-			}
-		},
-		targetUrl : {
-			get () {
-				return this.editing ? this.editingRedirect.targetUrl : this.redirectsStore.addNewRedirect.targetUrl
-			},
-			set (value) {
-				this.editing ? this.editingRedirect.targetUrl = value : this.redirectsStore.addNewRedirect.targetUrl = value
-			}
-		},
-		redirectType : {
-			get () {
-				return this.editing ? this.editingRedirect.redirectType : this.redirectsStore.addNewRedirect.redirectType
-			},
-			set (value) {
-				this.editing ? this.editingRedirect.redirectType = value : this.redirectsStore.addNewRedirect.redirectType = value
-			}
-		},
-		queryParam : {
-			get () {
-				return this.editing ? this.editingRedirect.queryParam : this.redirectsStore.addNewRedirect.queryParam
-			},
-			set (value) {
-				this.editing ? this.editingRedirect.queryParam = value : this.redirectsStore.addNewRedirect.queryParam = value
-			}
-		},
-		customRules : {
-			get () {
-				return this.editing ? this.editingRedirect.customRules : this.redirectsStore.addNewRedirect.customRules
-			},
-			set (value) {
-				this.editing ? this.editingRedirect.customRules = value : this.redirectsStore.addNewRedirect.customRules = value
-			}
-		},
-		showAdvancedSettings : {
-			get () {
-				return this.editing ? this.editingRedirect.showAdvancedSettings : this.redirectsStore.addNewRedirect.showAdvancedSettings
-			},
-			set (value) {
-				this.editing ? this.editingRedirect.showAdvancedSettings = value : this.redirectsStore.addNewRedirect.showAdvancedSettings = value
-			}
-		},
-		saveIsDisabled () {
-			return !!this.sourceUrls.filter(url => !url.url).length ||
-				!!this.sourceUrls.filter(url => 0 < url.errors.length).length ||
-				(this.redirectTypeHasTarget() && !this.targetUrl) ||
-				this.customRulesError
-		},
-		getRelativeAbsolute () {
-			const matched = this.targetUrl.match(/^\/([a-zA-Z0-9_\-%]*\..*)\//)
+	set (value) {
+		if (editing.value) {
+			editingRedirect.value.redirectType = value
+		} else {
+			redirectsStore.addNewRedirect.redirectType = value
+		}
+	}
+})
 
-			if (matched) {
-				return matched[0]
-			}
+const queryParam = computed({
+	get () {
+		return editing.value ? editingRedirect.value.queryParam : redirectsStore.addNewRedirect.queryParam
+	},
+	set (value) {
+		if (editing.value) {
+			editingRedirect.value.queryParam = value
+		} else {
+			redirectsStore.addNewRedirect.queryParam = value
+		}
+	}
+})
 
-			return null
-		},
-		sourceUrl () {
-			return 1 < this.sourceUrls.length ? __('Source URLs', td) : __('Source URL', td)
-		},
-		addRedirect () {
-			return 1 < this.sourceUrls.length ? __('Add Redirects', td) : __('Add Redirect', td)
-		},
-		hasTargetUrlErrors () {
-			if (!this.targetUrl) {
-				return []
-			}
+const redirectCustomRules = computed({
+	get () {
+		return editing.value ? editingRedirect.value.customRules : redirectsStore.addNewRedirect.customRules
+	},
+	set (value) {
+		if (editing.value) {
+			editingRedirect.value.customRules = value
+		} else {
+			redirectsStore.addNewRedirect.customRules = value
+		}
+	}
+})
 
-			const errors = []
-			const sanitizedTargetUrl = sanitizeString(this.targetUrl)
+const comment = computed({
+	get () {
+		return editing.value ? editingRedirect.value.comment : redirectsStore.addNewRedirect.comment
+	},
+	set (value) {
+		if (editing.value) {
+			editingRedirect.value.comment = value
+		} else {
+			redirectsStore.addNewRedirect.comment = value
+		}
+	}
+})
 
-			if (!sanitizedTargetUrl) {
-				errors.push(__('Your target URL is not valid.', td))
-				return errors
-			}
+const saveIsDisabled = computed(() => {
+	return !!sourceUrls.value.filter(url => !url.url).length ||
+		!!sourceUrls.value.filter(url => 0 < url.errors.length).length ||
+		(redirectTypeHasTarget() && !targetUrl.value) ||
+		customRulesError.value
+})
 
-			if (
-				this.targetUrl &&
-				!this.beginsWith(this.targetUrl, 'https://') &&
-				!this.beginsWith(this.targetUrl, 'http://') &&
-				'/' !== this.targetUrl.substr(0, 1)
-			) {
-				errors.push(sprintf(
-					// Translators: 1 - Adds a html tag with an option like: <code>^</code>, 2 - Adds a html tag with an option like: <code>^</code>.
-					__('Your target URL should be an absolute URL like %1$s or start with a slash %2$s.', td),
-					'<code>https://domain.com/' + sanitizedTargetUrl + '</code>',
-					'<code>/' + sanitizedTargetUrl + '</code>'
-				))
-			}
+const getRelativeAbsolute = computed(() => {
+	const matched = targetUrl.value?.match(/^\/([a-zA-Z0-9_\-%]*\..*)\//)
 
-			const matches = this.targetUrl.match(/[|\\$]/g)
-			if (null !== matches) {
-				// Let's make sure that all URLs have regex enabled or else we fail.
-				const regex = this.sourceUrls.map(u => u.regex)
-				if (!regex.every(a => a)) {
-					errors.push(sprintf(
-						// Translators: 1 - Adds a html tag with an option like: <code>^</code>.
-						__('Your target URL contains the invalid character(s) %1$s', td),
-						'<code>' + matches + '</code>'
-					))
+	if (matched) {
+		return matched[0]
+	}
+
+	return null
+})
+
+const sourceUrlLabel = computed(() => {
+	return 1 < sourceUrls.value.length ? __('Source URLs', td) : __('Source URL', td)
+})
+
+const addRedirectLabel = computed(() => {
+	return 1 < sourceUrls.value.length ? __('Add Redirects', td) : __('Add Redirect', td)
+})
+
+const hasTargetUrlErrors = computed(() => {
+	if (!targetUrl.value) {
+		return []
+	}
+
+	const errors = []
+	const sanitizedTargetUrl = sanitizeString(targetUrl.value)
+
+	if (!sanitizedTargetUrl) {
+		errors.push(__('Your target URL is not valid.', td))
+		return errors
+	}
+
+	if (
+		targetUrl.value &&
+		!beginsWith(targetUrl.value, 'https://') &&
+		!beginsWith(targetUrl.value, 'http://') &&
+		'/' !== targetUrl.value.substr(0, 1)
+	) {
+		errors.push(sprintf(
+			// Translators: 1 - Adds a html tag with an option like: <code>^</code>, 2 - Adds a html tag with an option like: <code>^</code>.
+			__('Your target URL should be an absolute URL like %1$s or start with a slash %2$s.', td),
+			'<code>https://domain.com/' + sanitizedTargetUrl + '</code>',
+			'<code>/' + sanitizedTargetUrl + '</code>'
+		))
+	}
+
+	const matches = targetUrl.value.match(/[|\\$]/g)
+	if (null !== matches) {
+		// Let's make sure that all URLs have regex enabled or else we fail.
+		const regex = sourceUrls.value.map(u => u.regex)
+		if (!regex.every(a => a)) {
+			errors.push(sprintf(
+				// Translators: 1 - Adds a html tag with an option like: <code>^</code>.
+				__('Your target URL contains the invalid character(s) %1$s', td),
+				'<code>' + matches + '</code>'
+			))
+		}
+	}
+
+	return errors
+})
+
+const hasTargetUrlWarnings = computed(() => {
+	if (!sanitizeString(targetUrl.value)) {
+		return []
+	}
+
+	const warnings = []
+	if (getRelativeAbsolute.value) {
+		warnings.push(sprintf(
+			// Translators: 1 - Domain URL, 2 - Domain URL.
+			__('Your URL appears to contain a domain inside the path: %1$s. Did you mean to use %2$s instead?', td),
+			'<code>' + getRelativeAbsolute.value + '</code>',
+			'<code>https:/' + getRelativeAbsolute.value + '</code>'
+		))
+	}
+
+	return warnings
+})
+
+const getDefaultRedirectType = computed(() => {
+	let option = getJsonValue(redirectsStore.options.redirectDefaults?.redirectType)
+	const defaultRedirect = REDIRECT_TYPES.find(t => parseInt(t.value) === parseInt(option?.value))
+
+	if (!option) {
+		option = REDIRECT_TYPES[0]
+	}
+
+	return defaultRedirect || option
+})
+
+const getDefaultQueryParam = computed(() => {
+	let option = getJsonValue(redirectsStore.options.redirectDefaults?.queryParam)
+	const defaultQueryParam = REDIRECT_QUERY_PARAMS.find(t => t.value === option?.value)
+
+	if (!option) {
+		option = REDIRECT_QUERY_PARAMS[0]
+	}
+
+	return defaultQueryParam || option
+})
+
+const getDefaultSlash = computed(() => {
+	return redirectsStore.options.redirectDefaults?.ignoreSlash
+})
+
+const getDefaultCase = computed(() => {
+	return redirectsStore.options.redirectDefaults?.ignoreCase
+})
+
+const getDefaultSourceUrl = computed(() => {
+	return {
+		id          : null,
+		url         : null,
+		regex       : false,
+		ignoreSlash : props.slash || getDefaultSlash.value || false,
+		ignoreCase  : props.case || getDefaultCase.value || false,
+		errors      : [],
+		warnings    : []
+	}
+})
+
+const getDefaultSourceUrls = computed(() => {
+	return [ JSON.parse(JSON.stringify(getDefaultSourceUrl.value)) ]
+})
+
+const redirectQueryParams = computed(() => {
+	return 0 < sourceUrls.value.filter(u => u.regex).length
+		? REDIRECT_QUERY_PARAMS.map(param => {
+			param.$isDisabled = false
+			if ('exact' === param.value) {
+				param.$isDisabled = true
+				// Let's also reset the selected queryParam.
+				if ('exact' === queryParam.value?.value) {
+					queryParam.value = REDIRECT_QUERY_PARAMS.find(option => !option.$isDisabled)
 				}
 			}
+			return param
+		})
+		: REDIRECT_QUERY_PARAMS.map(param => {
+			param.$isDisabled = false
+			return param
+		})
+})
 
-			return errors
-		},
-		hasTargetUrlWarnings () {
-			if (!sanitizeString(this.targetUrl)) {
-				return []
-			}
+const unPublishedPost = computed(() => {
+	return redirectHasUnPublishedPost({ post_id: props.postId, postStatus: props.postStatus })
+})
 
-			const warnings = []
-			if (this.getRelativeAbsolute) {
-				warnings.push(sprintf(
-					// Translators: 1 - Domain URL, 2 - Domain URL.
-					__('Your URL appears to contain a domain inside the path: %1$s. Did you mean to use %2$s instead?', td),
-					'<code>' + this.getRelativeAbsolute + '</code>',
-					'<code>https:/' + this.getRelativeAbsolute + '</code>'
-				))
-			}
+// Watchers
+watch(() => props.redirectComment, (value) => {
+	if (editing.value && value) {
+		editingRedirect.value.comment = value
+	}
+})
 
-			return warnings
-		},
-		getDefaultRedirectType () {
-			let option = this.getJsonValue(this.redirectsStore.options.redirectDefaults.redirectType)
-			const defaultRedirect = REDIRECT_TYPES.find(t => parseInt(t.value) === parseInt(option?.value))
+watch(sourceUrls, () => {
+	debounce(() => checkForDuplicates(), 500)
+}, { deep: true })
 
-			if (!option) {
-				option = REDIRECT_TYPES[0]
-			}
+// Methods
+function beginsWith (str, match) {
+	return 0 === match.indexOf(str) || str.substr(0, match.length) === match
+}
 
-			return defaultRedirect || option
-		},
-		getDefaultQueryParam () {
-			let option = this.getJsonValue(this.redirectsStore.options.redirectDefaults.queryParam)
-			const defaultQueryParam = REDIRECT_QUERY_PARAMS.find(t => t.value === option?.value)
+function addUrl () {
+	sourceUrls.value.push(JSON.parse(JSON.stringify(getDefaultSourceUrl.value)))
+}
 
-			if (!option) {
-				option = REDIRECT_QUERY_PARAMS[0]
-			}
+function removeUrl (index) {
+	sourceUrls.value.splice(index, 1)
+}
 
-			return defaultQueryParam || option
-		},
-		getDefaultSlash () {
-			return this.redirectsStore.options.redirectDefaults.ignoreSlash
-		},
-		getDefaultCase () {
-			return this.redirectsStore.options.redirectDefaults.ignoreCase
-		},
-		getDefaultSourceUrls () {
-			return [ JSON.parse(JSON.stringify(this.getDefaultSourceUrl)) ]
-		},
-		getDefaultSourceUrl () {
-			return {
-				id          : null,
-				url         : null,
-				regex       : false,
-				ignoreSlash : this.slash || this.getDefaultSlash || false,
-				ignoreCase  : this.case || this.getDefaultCase || false,
-				errors      : [],
-				warnings    : []
-			}
-		},
-		redirectQueryParams () {
-			return 0 < this.sourceUrls.filter(u => u.regex).length
-				? REDIRECT_QUERY_PARAMS.map(param => {
-					param.$isDisabled = false
-					if ('exact' === param.value) {
-						param.$isDisabled = true
-						// Let's also reset the selected queryParam.
-						if ('exact' === this.queryParam.value) {
-							this.queryParam = REDIRECT_QUERY_PARAMS.find(option => !option.$isDisabled)
-						}
-					}
-					return param
-				})
-				: REDIRECT_QUERY_PARAMS.map(param => {
-					param.$isDisabled = false
-					return param
-				})
-		},
-		unPublishedPost () {
-			return this.redirectHasUnPublishedPost({ post_id: this.postId, postStatus: this.postStatus })
-		}
-	},
-	methods : {
-		beginsWith (str, match) {
-			return 0 === match.indexOf(str) || str.substr(0, match.length) === match
-		},
-		addUrl () {
-			this.sourceUrls.push(JSON.parse(JSON.stringify(this.getDefaultSourceUrl)))
-		},
-		removeUrl (index) {
-			this.sourceUrls.splice(index, 1)
-		},
-		addRedirects () {
-			this.genericError   = false
-			this.addingRedirect = true
+function addRedirects () {
+	genericError.value   = false
+	addingRedirect.value = true
 
-			if (isBlockEditor()) {
-				const slug = this.urls?.[0]?.url ?? window.wp.data.select('core/editor').getCurrentPostAttribute('slug')
+	if (isBlockEditor()) {
+		const slug = props.urls?.[0]?.url ?? window.wp.data.select('core/editor').getCurrentPostAttribute('slug')
 
-				if (slug) {
-					this.sourceUrls.map(url => {
-						url.url = slug.startsWith('/') ? slug : `/${slug}`
-
-						return url
-					})
-				}
-			}
-
-			this.sourceUrls.map(url => {
-				if ('http' !== url.url.substr(0, 4) && '/' !== url.url.substr(0, 1) && 0 < url.url.length && !url.regex) {
-					url.url = '/' + url.url
-				}
+		if (slug) {
+			sourceUrls.value.map(url => {
+				url.url = slug.startsWith('/') ? slug : `/${slug}`
 
 				return url
 			})
-
-			this.redirectsStore.create({
-				sourceUrls            : this.sourceUrls,
-				targetUrl             : this.targetUrl,
-				queryParam            : this.queryParam.value,
-				customRules           : this.customRules,
-				redirectType          : this.redirectType.value,
-				redirectTypeHasTarget : this.redirectTypeHasTarget(),
-				group                 : this.log404 ? '404' : 'manual',
-				postId                : this.postId
-			})
-				.then(() => {
-					this.$emit('added-redirect')
-					window.aioseoBus.$emit('added-redirect')
-					this.reset()
-				})
-				.catch(error => {
-					this.handleError(error)
-				})
-		},
-		saveChanges () {
-			this.genericError   = false
-			this.addingRedirect = true
-
-			if ('http' !== this.sourceUrls[0].url.substr(0, 4) && '/' !== this.sourceUrls[0].url.substr(0, 1) && 0 < this.sourceUrls[0].url.length && !this.sourceUrls[0].regex) {
-				this.sourceUrls[0].url = '/' + this.sourceUrls[0].url
-			}
-
-			this.redirectsStore.update({
-				id      : this.sourceUrls[0].id,
-				payload : {
-					sourceUrls            : this.sourceUrls,
-					targetUrl             : this.targetUrl,
-					queryParam            : this.queryParam.value,
-					customRules           : this.customRules,
-					redirectType          : this.redirectType.value,
-					redirectTypeHasTarget : this.redirectTypeHasTarget(),
-					postId                : this.postId
-				}
-			})
-				.then(() => {
-					this.$emit('added-redirect')
-					this.reset()
-				})
-				.catch(error => {
-					console.error(error)
-					this.handleError(error)
-				})
-		},
-		handleError (error) {
-			if (409 !== error.response.status || !error.response.body.failed || !error.response.body.failed.length) {
-				this.genericError   = true
-				this.addingRedirect = false
-				return
-			}
-
-			const urlIndexes          = []
-			const failed              = error.response.body.failed
-			const genericErrorMessage = __('A redirect already exists for this source URL. To make changes, edit the original instead.', td)
-			failed.forEach(f => {
-				const urlIndex = this.sourceUrls.findIndex(u => u.url === f.url || f)
-				if (-1 !== urlIndex) {
-					if (!this.sourceUrls[urlIndex].errors.find(error => error === f.error || error === genericErrorMessage)) {
-						this.sourceUrls[urlIndex].errors.push(f.error || genericErrorMessage)
-					}
-					urlIndexes.push(urlIndex)
-				}
-			})
-
-			for (let i = this.sourceUrls.length - 1; 0 <= i; i--) {
-				if (urlIndexes.includes(i)) {
-					continue
-				}
-
-				this.sourceUrls.splice(i, 1)
-			}
-
-			this.addingRedirect = false
-		},
-		updateTargetUrl (value) {
-			this.targetUrl         = value
-			this.targetUrlErrors   = this.hasTargetUrlErrors
-			this.targetUrlWarnings = this.hasTargetUrlWarnings
-		},
-		reset () {
-			this.showAdvancedSettings = false
-			this.addingRedirect       = false
-
-			// Don't reset an edited URL.
-			if (this.edit) {
-				return
-			}
-
-			const redirectType = REDIRECT_TYPES.find(t => t.value === this.type) || this.getDefaultRedirectType
-			const queryParam   = REDIRECT_QUERY_PARAMS.find(t => t.value === this.query) || this.getDefaultQueryParam
-
-			this.sourceUrls        = [ JSON.parse(JSON.stringify(this.getDefaultSourceUrl)) ]
-			this.targetUrl         = null
-			this.targetUrlErrors   = []
-			this.targetUrlWarnings = []
-			this.redirectType      = redirectType || { label: '301 ' + __('Moved Permanently', td), value: 301 }
-			this.queryParam        = queryParam || { label: __('Ignore all parameters', td), value: 'ignore' }
-			this.customRules       = []
-		},
-		checkForDuplicates () {
-			const urls = []
-			this.sourceUrls.forEach((u, i) => {
-				// Prevent endless loop with the error message.
-				if (!u.url || u.errors.length) {
-					return
-				}
-
-				if (
-					urls.includes(u.url.replace(/\/$/, ''))
-				) {
-					this.sourceUrls[i].errors.push(__('This is a duplicate of a URL you are already adding. You can only add unique source URLs.', td))
-					return
-				}
-
-				urls.push(u.url.replace(/\/$/, ''))
-			})
-
-			this.updateTargetUrl(this.targetUrl)
-		},
-		redirectTypeHasTarget () {
-			return this.redirectType && ('undefined' === typeof this.redirectType.noTarget || !this.redirectType.noTarget)
 		}
-	},
-	mounted () {
-		if (0 <= this.sourceUrls?.length) {
-			this.sourceUrls = this.getDefaultSourceUrls
-		}
-
-		if (this.url) {
-			this.editing = true
-			this.sourceUrls = [ { ...this.getDefaultSourceUrl, ...this.url } ]
-		}
-
-		if (this.urls && this.urls.length) {
-			this.editing = true
-			this.sourceUrls = this.urls.map(url => ({ ...this.getDefaultSourceUrl, ...url }))
-		}
-
-		this.sourceDisabled = this.disableSource
-
-		// We don't have an url to work with yet. Let's set it as a warning string.
-		if (this.unPublishedPost) {
-			this.sourceUrls = this.sourceUrls.map(sourceUrl => {
-				sourceUrl.url =  '(' + this.strings.sourceUrlSetOncePublished + ')'
-				return sourceUrl
-			})
-
-			this.sourceDisabled = true
-		}
-
-		if (this.target) {
-			this.targetUrl = this.target
-		}
-
-		if (this.rules && 0 !== this.rules.length) {
-			this.customRules = this.rules
-		}
-
-		this.redirectType = REDIRECT_TYPES.find(t => t.value === this.type) || this.redirectType || this.getDefaultRedirectType
-		this.queryParam = REDIRECT_QUERY_PARAMS.find(t => t.value === this.query) || this.queryParam || this.getDefaultQueryParam
-
-		this.editingRedirect.showAdvancedSettings = this.isUsingAdvancedSettings
 	}
+
+	sourceUrls.value.map(url => {
+		if ('http' !== url.url.substr(0, 4) && '/' !== url.url.substr(0, 1) && 0 < url.url.length && !url.regex) {
+			url.url = '/' + url.url
+		}
+
+		return url
+	})
+
+	redirectsStore.create({
+		sourceUrls            : sourceUrls.value,
+		targetUrl             : targetUrl.value,
+		queryParam            : queryParam.value.value,
+		customRules           : redirectCustomRules.value,
+		redirectType          : redirectType.value.value,
+		redirectTypeHasTarget : redirectTypeHasTarget(),
+		group                 : props.log404 ? '404' : 'manual',
+		postId                : props.postId,
+		comment               : comment.value
+	})
+		.then(() => {
+			emit('added-redirect')
+			window.aioseoBus.$emit('added-redirect')
+			reset()
+		})
+		.catch(error => {
+			handleError(error)
+		})
 }
+
+function saveChanges () {
+	genericError.value   = false
+	addingRedirect.value = true
+
+	if ('http' !== sourceUrls.value[0].url.substr(0, 4) && '/' !== sourceUrls.value[0].url.substr(0, 1) && 0 < sourceUrls.value[0].url.length && !sourceUrls.value[0].regex) {
+		sourceUrls.value[0].url = '/' + sourceUrls.value[0].url
+	}
+
+	redirectsStore.update({
+		id      : sourceUrls.value[0].id,
+		payload : {
+			sourceUrls            : sourceUrls.value,
+			targetUrl             : targetUrl.value,
+			queryParam            : queryParam.value.value,
+			customRules           : redirectCustomRules.value,
+			redirectType          : redirectType.value.value,
+			redirectTypeHasTarget : redirectTypeHasTarget(),
+			postId                : props.postId,
+			comment               : comment.value
+		}
+	})
+		.then(() => {
+			emit('added-redirect')
+			reset()
+		})
+		.catch(error => {
+			console.error(error)
+			handleError(error)
+		})
+}
+
+function handleError (error) {
+	if (409 !== error.response.status || !error.response.body.failed || !error.response.body.failed.length) {
+		genericError.value   = true
+		addingRedirect.value = false
+		return
+	}
+
+	const urlIndexes          = []
+	const failed              = error.response.body.failed
+	const genericErrorMessage = __('A redirect already exists for this source URL. To make changes, edit the original instead.', td)
+	failed.forEach(f => {
+		const urlIndex = sourceUrls.value.findIndex(u => u.url === f.url || f)
+		if (-1 !== urlIndex) {
+			if (!sourceUrls.value[urlIndex].errors.find(error => error === f.error || error === genericErrorMessage)) {
+				sourceUrls.value[urlIndex].errors.push(f.error || genericErrorMessage)
+			}
+			urlIndexes.push(urlIndex)
+		}
+	})
+
+	for (let i = sourceUrls.value.length - 1; 0 <= i; i--) {
+		if (urlIndexes.includes(i)) {
+			continue
+		}
+
+		sourceUrls.value.splice(i, 1)
+	}
+
+	addingRedirect.value = false
+}
+
+function updateTargetUrl (value) {
+	targetUrl.value         = value
+	targetUrlErrors.value   = hasTargetUrlErrors.value
+	targetUrlWarnings.value = hasTargetUrlWarnings.value
+}
+
+function reset () {
+	addingRedirect.value = false
+
+	// Don't reset an edited URL.
+	if (props.edit) {
+		return
+	}
+
+	const newRedirectType = REDIRECT_TYPES.find(t => t.value === props.type) || getDefaultRedirectType.value
+	const newQueryParam   = REDIRECT_QUERY_PARAMS.find(t => t.value === props.query) || getDefaultQueryParam.value
+
+	sourceUrls.value        = [ JSON.parse(JSON.stringify(getDefaultSourceUrl.value)) ]
+	targetUrl.value         = null
+	targetUrlErrors.value   = []
+	targetUrlWarnings.value = []
+	redirectType.value      = newRedirectType || { label: '301 ' + __('Moved Permanently', td), value: 301 }
+	queryParam.value        = newQueryParam || { label: __('Ignore all parameters', td), value: 'ignore' }
+	redirectCustomRules.value = []
+	customRulesError.value    = false
+	showCustomRules.value     = false
+	comment.value           = ''
+}
+
+function checkForDuplicates () {
+	const urls = []
+	sourceUrls.value.forEach((u, i) => {
+		// Prevent endless loop with the error message.
+		if (!u.url || u.errors.length) {
+			return
+		}
+
+		if (
+			urls.includes(u.url.replace(/\/$/, ''))
+		) {
+			sourceUrls.value[i].errors.push(__('This is a duplicate of a URL you are already adding. You can only add unique source URLs.', td))
+			return
+		}
+
+		urls.push(u.url.replace(/\/$/, ''))
+	})
+
+	updateTargetUrl(targetUrl.value)
+}
+
+function redirectTypeHasTarget () {
+	return redirectType.value && ('undefined' === typeof redirectType.value.noTarget || !redirectType.value.noTarget)
+}
+
+// Lifecycle
+onMounted(() => {
+	if (0 <= sourceUrls.value?.length) {
+		sourceUrls.value = getDefaultSourceUrls.value
+	}
+
+	if (props.url) {
+		editing.value = true
+		sourceUrls.value = [ { ...getDefaultSourceUrl.value, ...props.url } ]
+	}
+
+	if (props.urls && props.urls.length) {
+		editing.value = true
+		sourceUrls.value = props.urls.map(url => ({ ...getDefaultSourceUrl.value, ...url }))
+	}
+
+	sourceDisabled.value = props.disableSource
+
+	// We don't have an url to work with yet. Let's set it as a warning string.
+	if (unPublishedPost.value) {
+		sourceUrls.value = sourceUrls.value.map(sourceUrl => {
+			sourceUrl.url = '(' + strings.sourceUrlSetOncePublished + ')'
+			return sourceUrl
+		})
+
+		sourceDisabled.value = true
+	}
+
+	if (props.target) {
+		targetUrl.value = props.target
+	}
+
+	if (props.rules && 0 !== props.rules.length) {
+		redirectCustomRules.value = props.rules
+		showCustomRules.value = true
+	}
+
+	if (props.redirectComment) {
+		comment.value = props.redirectComment
+	}
+
+	redirectType.value = REDIRECT_TYPES.find(t => t.value === props.type) || redirectType.value || getDefaultRedirectType.value
+	queryParam.value = REDIRECT_QUERY_PARAMS.find(t => t.value === props.query) || queryParam.value || getDefaultQueryParam.value
+})
 </script>
 
 <style lang="scss">
@@ -786,6 +808,116 @@ export default {
 		background-color: $border;
 	}
 
+	.aioseo-tooltip > div:nth-of-type(2) {
+		width: 17px;
+		height: 17px;
+
+		svg.aioseo-circle-question-mark {
+			width: 17px;
+			height: 17px;
+			color: $placeholder-color;
+		}
+	}
+
+	&__section-title {
+		display: block;
+		font-size: 14px;
+		font-weight: 600;
+		margin-bottom: 12px;
+	}
+
+	.source-url {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+		margin-bottom: 2px;
+
+		button {
+			padding: 0 6px;
+
+			svg {
+				width: 14px;
+				height: 14px;
+				margin-right: 6px;
+			}
+		}
+	}
+
+	.add-source-url {
+		display: inline;
+		color: $blue;
+		text-decoration: none;
+		cursor: pointer;
+
+		svg {
+			width: 12px;
+			height: 12px;
+			vertical-align: -1px;
+			margin-right: 2px;
+		}
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	.redirect-options {
+		display: flex;
+		width: 100%;
+		gap: 16px;
+		margin-top: 20px;
+		padding-top: 20px;
+		border-top: 1px solid $border;
+
+		&__comment {
+			flex: 2;
+			min-width: 0;
+		}
+
+		&__type,
+		&__query {
+			flex: 1;
+			min-width: 0;
+		}
+
+		&__label {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			font-weight: 600;
+			margin-bottom: 5px;
+		}
+	}
+
+	.custom-rules-toggle {
+		margin-top: 16px;
+
+		&__link {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 14px;
+			color: $blue;
+			text-decoration: none;
+			cursor: pointer;
+			white-space: nowrap;
+
+			svg {
+				width: 14px;
+				height: 14px;
+				transition: transform 0.2s ease;
+			}
+
+			&.active svg {
+				transform: rotate(45deg);
+			}
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+
 	&__settings {
 		width: 100%;
 		display: flex;
@@ -797,9 +929,9 @@ export default {
 
 	&__actions {
 		display: flex;
-		width: 100%;
-		justify-content: flex-end;
-		gap: 16px;
+		align-items: center;
+		gap: 12px;
+		margin-top: 12px;
 	}
 
 	&.edit-url {
@@ -827,11 +959,11 @@ export default {
 
 	.aioseo-settings-row {
 		.settings-name {
+
 			.name {
 				line-height: 1.4;
 				font-size: 14px;
 				font-weight: 600;
-				margin-bottom: 5px;
 			}
 		}
 	}
@@ -848,7 +980,7 @@ export default {
 		}
 
 		.aioseo-description.source-description {
-			margin-top: 12px;
+			margin-top: 0;
 
 			+ .source-url-options {
 				margin-top: 12px;
@@ -860,7 +992,7 @@ export default {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			margin: 36px 30px;
+			margin: 39px 30px 0;
 
 			&:empty {
 				margin-block: 0;
@@ -876,7 +1008,7 @@ export default {
 		.target {
 			flex: 1;
 			display: flex;
-			align-items: center;
+			align-items: flex-start;
 
 			> * {
 				flex: 1;
@@ -888,6 +1020,18 @@ export default {
 		}
 
 		.target {
+			.settings-name {
+				min-height: 25px;
+				display: flex;
+				align-items: center;
+				margin-bottom: 2px;
+			}
+
+			.name {
+				margin-top: 0;
+				margin-bottom: 0;
+			}
+
 			input {
 				padding-right: 30px;
 			}
@@ -928,7 +1072,7 @@ export default {
 	.settings {
 		display: flex;
 		flex-direction: row;
-		margin: 20px 0;
+		margin: 0;
 
 		&.advanced {
 			flex-direction: column;

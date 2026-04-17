@@ -35,6 +35,16 @@ const aiStore = useAiStore()
 		margin-bottom: 10px;
 	}
 
+	> .aioseo-blur {
+		min-height: 650px;
+	}
+
+	.aioseo-cta .aioseo-ai-credit-counter {
+		> .counter-container-wrapper {
+			justify-content: center;
+		}
+	}
+
 	.aioseo-ai-content-features {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

@@ -40,12 +40,12 @@ export const useSchemaStore = defineStore('SchemaStore', {
 		previousOutputRequestData : null
 	}),
 	actions : {
-		getCustomObject () {
+		getCustomObject (graphName, schema) {
 			return {
-				id        : '#aioseo-custom-' + new Date().getTime().toString(36),
+				id        : '#aioseo-custom-' + new Date().getTime().toString(36) + Math.random().toString(36).substring(2, 6),
 				custom    : true,
-				graphName : this.custom.graphName,
-				schema    : this.custom.schema
+				graphName : graphName ?? this.custom.graphName,
+				schema    : schema ?? this.custom.schema
 			}
 		},
 		resetSessionState () {
@@ -66,9 +66,16 @@ export const useSchemaStore = defineStore('SchemaStore', {
 
 			this.isDirty = false
 		},
-		addCustomAsGraph () {
+		addCustomAsGraph (graphs) {
 			const postEditorStore = usePostEditorStore()
-			postEditorStore.currentPost.schema.customGraphs.push(this.getCustomObject())
+
+			if (!graphs) {
+				graphs = [ this.getCustomObject() ]
+			}
+
+			graphs.forEach((graph) => {
+				postEditorStore.currentPost.schema.customGraphs.push(graph)
+			})
 
 			postEditorStore.currentPost.schema.customGraphs = postEditorStore.currentPost.schema.customGraphs.sort((a, b) => {
 				return (a.graphName < b.graphName) ? -1 : 1

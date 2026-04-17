@@ -509,9 +509,10 @@ export default {
 		margin-bottom:var(--aioseo-gutter);
 
 		.tabs-scroller {
-			overflow: clip;
-			overflow-clip-margin: 2px;
+			flex-grow: 0;
 			min-width: 0;
+			overflow-clip-margin: 2px;
+			overflow: clip;
 
 			&.visually-hidden {
 				visibility: hidden;

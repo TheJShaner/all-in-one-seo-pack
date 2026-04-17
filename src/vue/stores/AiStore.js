@@ -6,7 +6,8 @@ import links from '@/vue/utils/links'
 
 import {
 	useOptionsStore,
-	usePostEditorStore
+	usePostEditorStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import { getPostEditedContent } from '@/vue/plugins/tru-seo/components/postContent'
@@ -14,7 +15,8 @@ import { getPostPermalink } from '@/vue/plugins/tru-seo/components/postPermalink
 
 export const useAiStore = defineStore('AiStore', {
 	state : () => ({
-		faqs : {
+		options : {},
+		faqs    : {
 			tone     : '',
 			audience : ''
 		},
@@ -56,8 +58,8 @@ export const useAiStore = defineStore('AiStore', {
 	},
 	actions : {
 		storeAccessToken (accessToken) {
-			const optionsStore = useOptionsStore()
-			optionsStore.internalOptions.internal.ai.accessToken = accessToken
+			const sensitiveOptionsStore = useSensitiveOptionsStore()
+			sensitiveOptionsStore.hasAiAccessToken = !!accessToken
 
 			return http.post(links.restUrl('ai/auth'))
 				.send({
@@ -120,7 +122,6 @@ export const useAiStore = defineStore('AiStore', {
 						return
 					}
 
-					const postEditorStore = usePostEditorStore()
 					postEditorStore.currentPost.ai.socialPosts = response.body.snippets
 
 					const optionsStore = useOptionsStore()
@@ -157,6 +158,27 @@ export const useAiStore = defineStore('AiStore', {
 					return response
 				})
 		},
+		generateSchemas (payload) {
+			const postEditorStore = usePostEditorStore()
+
+			return http.post(links.restUrl('ai/schema'))
+				.send({
+					postId : postEditorStore.currentPost.id,
+					...payload
+				})
+				.then(response => {
+					if (response.body.error) {
+						return Promise.reject(response.body.error)
+					}
+
+					postEditorStore.currentPost.ai.schemas = response.body.schemas
+
+					const optionsStore = useOptionsStore()
+					optionsStore.internalOptions.internal.ai = response.body.aiOptions
+
+					return response
+				})
+		},
 		generateKeyPoints (rephrase = false) {
 			const postEditorStore = usePostEditorStore()
 
@@ -186,91 +208,80 @@ export const useAiStore = defineStore('AiStore', {
 					return response
 				})
 		},
-		generateMetaTitles (rephrase = false) {
-			const postEditorStore = usePostEditorStore()
-			const focusKeyword    = postEditorStore.currentPost.keyphrases.focus.keyphrase
+		generateMetaTitles (payload = {}) {
+			const optionsStore = useOptionsStore()
 
 			return http.post(links.restUrl('ai/meta/title'))
 				.send({
-					postId      : postEditorStore.currentPost.id,
-					postContent : getPostEditedContent(),
-					focusKeyword,
-					options     : {
-						tone     : this.metaTitle.tone,
-						audience : this.metaTitle.audience
-					},
-					rephrase,
-					titles : postEditorStore.currentPost.ai.titles
+					postId       : payload.postId,
+					postContent  : payload?.postContent || '',
+					focusKeyword : payload?.focusKeyword || '',
+					rephrase     : payload?.rephrase || false,
+					titles       : payload?.titles || [],
+					options      : {
+						tone     : this.metaTitle.tone || optionsStore.options.aiContent.tone,
+						audience : this.metaTitle.audience || optionsStore.options.aiContent.audience
+					}
 				})
 				.then(response => {
 					if (response.body.error) {
 						return Promise.reject(response.body.error)
 					}
 
-					postEditorStore.currentPost.ai.titles = response.body.titles
+					optionsStore.internalOptions.internal.ai = response.body.aiOptions
+
+					return response
+				})
+				.catch(error => {
+					throw error
+				})
+		},
+		generateImageAlt (payload = {}) {
+			return http.post(links.restUrl('ai/image/alt'))
+				.send({
+					attachmentId : payload.attachmentId
+				})
+				.then(response => {
+					if (response.body.error) {
+						return Promise.reject(response.body.error)
+					}
 
 					const optionsStore = useOptionsStore()
 					optionsStore.internalOptions.internal.ai = response.body.aiOptions
 
 					return response
 				})
+				.catch(error => {
+					throw error
+				})
 		},
-		generateMetaDescriptions (rephrase = false) {
-			const postEditorStore = usePostEditorStore()
-			const focusKeyword    = postEditorStore.currentPost.keyphrases.focus.keyphrase
+		generateMetaDescriptions (payload = {}) {
+			const optionsStore = useOptionsStore()
 
 			return http.post(links.restUrl('ai/meta/description'))
 				.send({
-					postId      : postEditorStore.currentPost.id,
-					postContent : getPostEditedContent(),
-					focusKeyword,
-					options     : {
-						tone     : this.metaDescription.tone,
-						audience : this.metaDescription.audience
-					},
-					rephrase,
-					descriptions : postEditorStore.currentPost.ai.descriptions
+					postId       : payload.postId,
+					postContent  : payload?.postContent || '',
+					focusKeyword : payload?.focusKeyword || '',
+					rephrase     : payload?.rephrase || false,
+					descriptions : payload?.descriptions || [],
+					options      : {
+						tone     : this.metaDescription.tone || optionsStore.options.aiContent.tone,
+						audience : this.metaDescription.audience || optionsStore.options.aiContent.audience
+					}
 				})
 				.then(response => {
 					if (response.body.error) {
 						return Promise.reject(response.body.error)
 					}
 
-					postEditorStore.currentPost.ai.descriptions = response.body.descriptions
-
-					const optionsStore = useOptionsStore()
 					optionsStore.internalOptions.internal.ai = response.body.aiOptions
 
 					return response
 				})
-		},
-		addFaq (faq) {
-			this.faqData.faqs.push(faq)
-		},
-		removeFaq (faq) {
-			this.faqData.faqs = this.faqData.faqs.filter(item => item.id !== faq.id)
-		},
-		addKeyPoint (keyPoint) {
-			this.keyPointsData.keyPoints.push(keyPoint)
-		},
-		removeKeyPoint (keyPoint) {
-			this.keyPointsData.keyPoints = this.keyPointsData.keyPoints.filter(item => item.id !== keyPoint.id)
-		},
-		formatFaqs () {
-			let faqString = ''
-			this.faqData.faqs.forEach((faq) => {
-				faqString += `Q: ${faq.question}\nA: ${faq.answer}\n\n`
-			})
-
-			return faqString
-		},
-		formatKeyPoints () {
-			let keyPointString = ''
-			this.keyPointsData.keyPoints.forEach((keyPoint) => {
-				keyPointString += `${keyPoint.title}\n ${keyPoint.explanation}\n\n`
-			})
-
-			return keyPointString
+				.catch(error => {
+					throw error
+				})
 		},
 		deactivate () {
 			return http.post(links.restUrl('ai/deactivate'))

@@ -85,7 +85,7 @@
 
 				<div class="aioseo-ai-assistant-block__input-row aioseo-ai-assistant-block__input-row--gray">
 					<div class="aioseo-ai-assistant-block__input-col aioseo-ai-assistant-block__input-col--disclaimer">
-						<span v-html="strings.disclaimer" />
+						<span v-html="aiContentStrings.disclaimer" />
 					</div>
 				</div>
 			</div>
@@ -120,13 +120,14 @@ import {
 	usePostEditorStore
 } from '@/vue/stores'
 
-import { GLOBAL_STRINGS } from '@/vue/plugins/constants'
+import { marked } from 'marked'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import { __, sprintf } from '@/vue/plugins/translations'
+import { __ } from '@/vue/plugins/translations'
 import { getPostEditedContent } from '@/vue/plugins/tru-seo/components/postContent'
 import { getPostEditedTitle } from '@/vue/plugins/tru-seo/components/postTitle'
 import { useAiContent } from '@/vue/composables/AiContent'
 
+import { getEditorDocument, getEditorWindow } from '@/vue/utils/editor'
 import links from '@/vue/utils/links'
 
 import BaseButton from '@/vue/components/common/base/Button'
@@ -139,7 +140,8 @@ const td = import.meta.env.VITE_TEXTDOMAIN
 const {
 	toneOptions,
 	audienceOptions,
-	hasEnoughCredits
+	hasEnoughCredits,
+	strings: aiContentStrings
 } = useAiContent()
 
 const aiAssistantStore = useAiAssistantStore()
@@ -170,11 +172,6 @@ const strings = {
 	delete              : __('Delete', td),
 	regenerate          : __('Regenerate', td),
 	noPermission        : __('You do not have permission to use the AI Assistant.', td),
-	disclaimer          : sprintf(
-		// Translators: 1 - The plugin name ("All in One SEO").
-		__('AI-generated content could be inaccurate or biased. %1$s', td),
-		links.getDocLink(GLOBAL_STRINGS.learnMore, 'aiDisclaimer', true)
-	),
 	userPromptMaxlength : __('You have reached the maximum number of allowed characters.', td)
 }
 
@@ -273,9 +270,8 @@ const resizeInput = () => {
 	node.style.height = node.scrollHeight + 'px'
 }
 
-const updateParsedContent = async () => {
-	await aiAssistantStore.initMarkdownConverter()
-	parsedContent.value = aiAssistantStore.markdownConverter.render(app.root.data.content)
+const updateParsedContent = () => {
+	parsedContent.value = marked.parse(app.root.data.content, { breaks: true })
 
 	resizeInput()
 }
@@ -295,9 +291,9 @@ const isElementTopVisible = (element) => {
 	}
 
 	const rect = element.getBoundingClientRect()
-	const viewportHeight = window.innerHeight || document.documentElement.clientHeight
+	const editorWin = getEditorWindow()
+	const viewportHeight = editorWin.innerHeight || editorWin.document.documentElement.clientHeight
 
-	// Check if the top of the element is visible in the viewport.
 	return 0 <= rect.top && rect.top <= viewportHeight
 }
 
@@ -320,7 +316,7 @@ const getPostContent = () => {
 	let postContent = ''
 	try {
 		// Hide blocks temporarily to prevent their content from being included in the post content.
-		document.querySelectorAll('.aioseo-ai-assistant-block').forEach($block => {
+		getEditorDocument().querySelectorAll('.aioseo-ai-assistant-block').forEach($block => {
 			$block.style.visibility = 'hidden'
 		})
 
@@ -337,7 +333,7 @@ const getPostContent = () => {
 		console.warn('Could not retrieve post content for context:', error)
 		postContent = ''
 	} finally {
-		document.querySelectorAll('.aioseo-ai-assistant-block').forEach($block => {
+		getEditorDocument().querySelectorAll('.aioseo-ai-assistant-block').forEach($block => {
 			$block.style.visibility = 'visible'
 		})
 	}

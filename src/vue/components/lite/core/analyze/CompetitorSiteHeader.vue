@@ -7,13 +7,13 @@
 			:toggles="false"
 		>
 			<component
-				:is="!optionsStore.internalOptions.internal.siteAnalysis.connectToken ? CoreBlur : 'div'"
+				:is="!sensitiveOptionsStore.hasSiteAnalysisConnectToken ? CoreBlur : 'div'"
 			>
 				<slot />
 			</component>
 
 			<div
-				v-if="!optionsStore.internalOptions.internal.siteAnalysis.connectToken"
+				v-if="!sensitiveOptionsStore.hasSiteAnalysisConnectToken"
 				class="aioseo-seo-site-score-cta"
 			>
 				<a
@@ -24,7 +24,7 @@
 		</core-card>
 
 		<template
-			v-if="optionsStore.internalOptions.internal.siteAnalysis.connectToken"
+			v-if="sensitiveOptionsStore.hasSiteAnalysisConnectToken"
 		>
 			<slot name="competitor-results" />
 		</template>
@@ -34,8 +34,8 @@
 <script setup>
 import {
 	useConnectStore,
-	useOptionsStore,
-	useRootStore
+	useRootStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import { popup } from '@/vue/utils/popup'
@@ -48,8 +48,8 @@ const {
 	strings
 } = useSeoSiteScore()
 
-const optionsStore = useOptionsStore()
-const rootStore    = useRootStore()
+const rootStore             = useRootStore()
+const sensitiveOptionsStore = useSensitiveOptionsStore()
 
 const openPopup = (url) => {
 	popup(

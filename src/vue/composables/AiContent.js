@@ -1,14 +1,34 @@
 import {
+	useAiStore,
 	useOptionsStore,
 	useRootStore
 } from '@/vue/stores'
 
+import { getPostEditedContent } from '@/vue/plugins/tru-seo/components/postContent'
+
+import { GLOBAL_STRINGS } from '@/vue/plugins/constants'
+import links from '@/vue/utils/links'
+
 import { __, sprintf } from '@wordpress/i18n'
 const td = import.meta.env.VITE_TEXTDOMAIN
 
+export const defaultFeatureCosts = {
+	titles       : 10,
+	descriptions : 10,
+	socialPosts  : 10,
+	keyPoints    : 10,
+	faqs         : 10,
+	schemas      : 25,
+	aiAssistant  : 50,
+	imageAltText : 10
+}
+
 export const useAiContent = () => {
+	const aiStore      = useAiStore()
 	const rootStore    = useRootStore()
 	const optionsStore = useOptionsStore()
+
+	const minContentLength = aiStore.options?.minContentLength || 200
 
 	const toneOptions = [
 		{ value: 'analytical', label: __('Analytical', td) },
@@ -78,20 +98,25 @@ export const useAiContent = () => {
 		return 'square'
 	}
 
-	const strings = {
-		credits          : __('Credits', td),
-		alertDescription : sprintf(
-			// Translators: 1 - Link to the AI Content settings page.
-			__('You can manage your default settings under <a href="%1$s" target="_blank" rel="noopener noreferrer">AI Suite > AI Content</a>.', td),
-			rootStore.aioseo.urls.aio.aiSuite + '#/ai-content'
-		),
-		audience         : __('Audience', td),
-		tone             : __('Tone', td),
-		imageQuality     : __('Quality', td),
-		imageStyle       : __('Style', td),
-		imageAspectRatio : __('Aspect Ratio', td),
-		somethingWrong   : __('We ran into an error. Please try again or contact support if it persists.', td)
+	const getPostContentLength = () => {
+		return getPostEditedContent()
+			.replace(/<\/?[a-z][^>]*?>/gi, '')
+			.replace(/<!--[\s\S]*?-->/g, '')
+			.trim()
+			.length
 	}
+
+	const hasEnoughContent = () => getPostContentLength() >= minContentLength
+
+	const rephraseCost = 5
+
+	const getFeatureCost = (featureName) => {
+		const costPerFeature = optionsStore.internalOptions?.internal?.ai?.costPerFeature || {}
+
+		return costPerFeature[featureName] || defaultFeatureCosts[featureName] || 10
+	}
+
+	const getRephraseCost = () => rephraseCost
 
 	const hasEnoughCredits = (amountOfCredits) => {
 		return optionsStore.internalOptions.internal.ai.credits.remaining >= amountOfCredits
@@ -105,22 +130,49 @@ export const useAiContent = () => {
 		)
 	}
 
-	const getFeatureCost = (featureName) => {
-		const costPerFeature = optionsStore.internalOptions?.internal?.ai?.costPerFeature || {}
-
-		// Return cost from API or fallback to a hardcoded value of 10.
-		return costPerFeature[featureName] || 10
+	const strings = {
+		credits    : __('Credits', td),
+		disclaimer : sprintf(
+			__('AI-generated content could be inaccurate or biased. %1$s', td),
+			links.getDocLink(GLOBAL_STRINGS.learnMore, 'aiDisclaimer', true)
+		),
+		alertDescription : sprintf(
+			// Translators: 1 - Link to the AI Content settings page.
+			__('You can manage your default settings under <a href="%1$s" target="_blank" rel="noopener noreferrer">AI Suite > AI Content</a>.', td),
+			rootStore.aioseo.urls.aio.aiSuite + '#/ai-content'
+		),
+		audience         : __('Audience', td),
+		tone             : __('Tone', td),
+		imageQuality     : __('Quality', td),
+		imageStyle       : __('Style', td),
+		imageAspectRatio : __('Aspect Ratio', td),
+		noContentWarning : sprintf(
+			// Translators: 1 - Minimum number of characters.
+			__('Your post is too short to generate AI content. Please add more content. For the best results, we recommend adding at least %1$d characters.', td),
+			minContentLength
+		),
+		rephrase : sprintf(
+			// Translators: 1 - Number of credits.
+			__('Regenerate (%1$d credits)', td),
+			rephraseCost
+		),
+		somethingWrong      : __('We ran into an error. Please try again or contact support if it persists.', td),
+		viewPreviousResults : __('View Previous Results', td)
 	}
 
 	return {
 		audienceOptions,
 		getAspectRatioFromDimensions,
 		getFeatureCost,
+		getPostContentLength,
+		getRephraseCost,
+		hasEnoughContent,
 		hasEnoughCredits,
 		imageAspectRatioOptions,
 		imageQualityOptions,
 		imageStyleOptions,
 		loadingText,
+		minContentLength,
 		strings,
 		toneOptions
 	}

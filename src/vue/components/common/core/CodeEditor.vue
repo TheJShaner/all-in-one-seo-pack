@@ -10,6 +10,7 @@ import { createEditor } from 'prism-code-editor'
 import 'prism-code-editor/prism/languages/json'
 
 export default {
+	emits : [ 'change', 'paste', 'blur' ],
 	props : {
 		editorId : {
 			type     : String,
@@ -34,6 +35,12 @@ export default {
 			}
 		},
 		readonly : {
+			type : Boolean,
+			default () {
+				return false
+			}
+		},
+		wordWrap : {
 			type : Boolean,
 			default () {
 				return false
@@ -91,6 +98,7 @@ export default {
 				value        : this.value,
 				readOnly     : this.readonly,
 				lineNumbers  : true,
+				wordWrap     : this.wordWrap,
 				tabSize      : 4,
 				insertSpaces : false,
 				onUpdate (value) {

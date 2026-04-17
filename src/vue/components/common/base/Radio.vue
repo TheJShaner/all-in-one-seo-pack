@@ -252,18 +252,14 @@ export default {
 				border: 1px solid $input-border;
 				background-color: #fff;
 
-				&:before {
-					background-color: #fff;
-				}
-
 				&:after {
 					display: none;
 					position: absolute;
 					content: "";
 					height: 10px;
 					width: 10px;
-					left: 8px;
-					bottom: 8px;
+					left: 6px;
+					bottom: 6px;
 					background-color: #fff;
 					transition: 0.2s;
 					border-radius: 50%;
@@ -286,10 +282,6 @@ export default {
 
 				span {
 					background-color: $border;
-
-					&:before {
-						background-color: $border;
-					}
 
 					&:after {
 						background-color: $placeholder-color;

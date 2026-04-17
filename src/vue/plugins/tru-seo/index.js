@@ -174,8 +174,13 @@ class TruSeo {
 				}
 
 				// Only update analysis results and scores, not user input.
+				// Create new references for keyphrases so child components detect prop changes.
 				postEditorStore.updateState({
 					...postEditorStore.currentPost,
+					keyphrases : {
+						...postEditorStore.currentPost.keyphrases,
+						additional : [ ...postEditorStore.currentPost.keyphrases.additional ]
+					},
 					seo_score     : analysisState.seo_score,
 					page_analysis : analysisState.page_analysis,
 					loading       : analysisState.loading

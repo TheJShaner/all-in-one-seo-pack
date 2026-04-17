@@ -85,11 +85,11 @@
 					size="small"
 					type="gray"
 					@click="event => generate(true)"
-					:disabled="!aiContent.hasEnoughCredits(5)"
+					:disabled="!aiContent.hasEnoughCredits(aiContent.getRephraseCost())"
 				>
 					<svg-rephrase />
 
-					{{ strings.rephrase }}
+					{{ aiContent.strings.rephrase }}
 				</base-button>
 
 				<credit-counter parent-component-context="modal" />
@@ -103,7 +103,7 @@
 					type="gray"
 					@click="event => currentScreen = 'results'"
 				>
-					<span>{{ strings.viewPreviousResults }}</span>
+					<span>{{ aiContent.strings.viewPreviousResults }}</span>
 				</base-button>
 
 				<base-button
@@ -342,9 +342,7 @@ export default {
 				// Translators: 1 - Number of credits.
 				__('Generate Key Points (%1$d credits)', td),
 				aiContent.getFeatureCost('keyPoints')
-			),
-			rephrase            : __('Regenerate (5 credits)', td),
-			viewPreviousResults : __('View Previous Results', td)
+			)
 		}
 
 		const loaders = [

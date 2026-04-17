@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 import liveReload from 'vite-plugin-live-reload'
 import postcssRTLCSS from 'postcss-rtlcss'
 import replace from '@rollup/plugin-replace'
-import { visualizer } from 'rollup-plugin-visualizer'
+// import { visualizer } from 'rollup-plugin-visualizer'
 import del from 'rollup-plugin-delete'
 import path from 'path'
 import fs from 'fs'
@@ -50,7 +50,8 @@ const getPages = () => {
 		sitemaps            : './src/vue/pages/sitemaps/main.js',
 		'social-networks'   : './src/vue/pages/social-networks/main.js',
 		tools               : './src/vue/pages/tools/main.js',
-		'seo-revisions'     : './src/vue/pages/seo-revisions/main.js'
+		'seo-revisions'     : './src/vue/pages/seo-revisions/main.js',
+		'ai-bulk-generate'  : './src/vue/pages/ai-bulk-generate/main.js'
 	}
 }
 
@@ -232,13 +233,8 @@ export default ({ mode }) => {
 							}
 
 							// Markdown converter (AI Assistant)
-							if (id.includes('markdown-it') || id.includes('linkify-it')) {
+							if (id.includes('marked')) {
 								return 'vendor-markdown'
-							}
-
-							// Date/time libraries
-							if (id.includes('luxon') || id.includes('dayjs')) {
-								return 'vendor-datetime'
 							}
 
 							// Quill editor is large
@@ -252,7 +248,7 @@ export default ({ mode }) => {
 							}
 
 							// Phone number input
-							if (id.includes('maz-ui') || id.includes('libphonenumber')) {
+							if (id.includes('vue-tel-input') || id.includes('libphonenumber')) {
 								return 'vendor-phone'
 							}
 
@@ -324,13 +320,13 @@ export default ({ mode }) => {
 							to   : `dist/${version}/manifest.php`
 						}
 					])
-					/* visualizer({
-						open       : true,              // Opens in browser automatically
-						filename   : 'dist/stats.html',  // Output file
-						gzipSize   : true,          // Show gzipped sizes
-						brotliSize : true,        // Show brotli sizes
-						template   : 'treemap'      // or 'sunburst', 'network'
-					}) */
+					// visualizer({
+					// 	open       : true,              // Opens in browser automatically
+					// 	filename   : 'dist/stats.html',  // Output file
+					// 	gzipSize   : true,          // Show gzipped sizes
+					// 	brotliSize : true,        // Show brotli sizes
+					// 	template   : 'treemap'      // or 'sunburst', 'network'
+					// })
 				],
 				// This is a workaround for an issue with rollup that won't be fixed any time soon. See: https://github.com/vitejs/vite/issues/15012
 				onLog (level, log, handler) {
@@ -355,11 +351,10 @@ export default ({ mode }) => {
 				'element-plus/dist/locale/en.mjs',
 				'emoji-mart',
 				'emoji-mart/dist/browser',
-				'libphonenumber-js',
 				'lodash-es',
 				'lottie-web',
-				'luxon',
-				'maz-ui/components/MazPhoneNumberInput',
+				'dayjs',
+				'vue-tel-input',
 				'popper.js',
 				'quill',
 				'superagent',

@@ -149,7 +149,7 @@ import {
 	useRootStore
 } from '@/vue/stores'
 
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import CoreAlert from '@/vue/components/common/core/alert/Index'
 import CoreCard from '@/vue/components/common/core/Card'
 import CoreModal from '@/vue/components/common/core/modal/Index'
@@ -282,12 +282,12 @@ export default {
 				})
 		},
 		getBackupName (backup) {
-			const date = DateTime.fromMillis(backup * 1000).setZone(DateTime.local().zoneName)
+			const date = dayjs(backup * 1000).tz(dayjs.tz.guess())
 			return sprintf(
 				// Translators: 1 - Date, 2 - Timestamp.
 				__('%1$s at %2$s', td),
-				'<strong>' + date.toFormat('MMMM d, yyyy') + '</strong>',
-				'<strong>' + date.toFormat('h:mma ZZZZ') + '</strong>'
+				'<strong>' + date.format('MMMM D, YYYY') + '</strong>',
+				'<strong>' + date.format('h:mma z') + '</strong>'
 			)
 		},
 		processBackupAction () {

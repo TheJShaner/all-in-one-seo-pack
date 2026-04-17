@@ -11,7 +11,8 @@
 <script>
 import {
 	useOptionsStore,
-	useSearchStatisticsStore
+	useSearchStatisticsStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import CoreAlert from '@/vue/components/common/core/alert/Index'
@@ -24,7 +25,8 @@ export default {
 	setup () {
 		return {
 			optionsStore          : useOptionsStore(),
-			searchStatisticsStore : useSearchStatisticsStore()
+			searchStatisticsStore : useSearchStatisticsStore(),
+			sensitiveOptionsStore : useSensitiveOptionsStore()
 		}
 	},
 	components : {
@@ -37,7 +39,7 @@ export default {
 	},
 	computed : {
 		invalidAuthentication () {
-			return this.searchStatisticsStore.unverifiedSite || 'object' !== typeof this.optionsStore.internalOptions.internal?.searchStatistics?.profile
+			return this.searchStatisticsStore.unverifiedSite || (this.searchStatisticsStore.isConnected && !this.sensitiveOptionsStore.hasSearchStatisticsProfileKey)
 		}
 	}
 }

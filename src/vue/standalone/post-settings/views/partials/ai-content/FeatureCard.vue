@@ -105,6 +105,7 @@ import SvgKeyPoints from '@/vue/components/common/svg/ai/KeyPoints'
 import SvgMetaDescription from '@/vue/components/common/svg/ai/MetaDescription'
 import SvgMetaTitle from '@/vue/components/common/svg/ai/MetaTitle'
 import SvgRepurposeContent from '@/vue/components/common/svg/ai/RepurposeContent'
+import SvgSparkles from '@/vue/components/common/svg/ai/Sparkles'
 import SvgStarOutline from '@/vue/components/common/svg/StarOutline'
 
 import { __, sprintf } from '@/vue/plugins/translations'
@@ -134,6 +135,7 @@ export default {
 		SvgMetaDescription,
 		SvgMetaTitle,
 		SvgRepurposeContent,
+		SvgSparkles,
 		SvgStarOutline
 	},
 	props : {

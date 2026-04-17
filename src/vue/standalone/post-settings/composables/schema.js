@@ -1,8 +1,12 @@
 import { merge } from 'lodash-es'
-import { useSchemaStore } from '@/vue/stores'
+import {
+	useSchemaStore,
+	useTagsStore
+} from '@/vue/stores'
 
 import { __ } from '@/vue/plugins/translations'
-const td = import.meta.env.VITE_TEXTDOMAIN
+const td    = import.meta.env.VITE_TEXTDOMAIN
+const tdPro = import.meta.env.VITE_TEXTDOMAIN_PRO
 
 export const useSchema = () => {
 	const graphs = [
@@ -217,9 +221,21 @@ export const useSchema = () => {
 		return parentGraph || graphName
 	}
 
+	const getSchemaWarnings = (string) => {
+		const tagsStore = useTagsStore()
+		const warnings  = []
+
+		if (!tagsStore.liveTags.featured_image_url && string?.includes('#featured_image_url')) {
+			warnings.push(__('This schema uses your featured image URL, which hasn\'t been set yet. It will resolve automatically once you add a featured image.', tdPro))
+		}
+
+		return warnings
+	}
+
 	return {
 		childGraphs,
 		graphs,
+		getSchemaWarnings,
 		initSchemaEditor,
 		getGraphObject,
 		getParentGraphName

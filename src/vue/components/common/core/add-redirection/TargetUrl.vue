@@ -58,7 +58,6 @@ import {
 	useRootStore
 } from '@/vue/stores'
 
-import { debounce } from '@/vue/utils/debounce'
 import { useUrl } from '@/vue/composables/Url'
 
 import BaseInput from '@/vue/components/common/base/Input'
@@ -99,7 +98,8 @@ export default {
 			showResults : false,
 			isLoading   : false,
 			value       : null,
-			results     : []
+			results     : [],
+			searchTimer : null
 		}
 	},
 	watch : {
@@ -147,27 +147,28 @@ export default {
 				this.results = []
 				return
 			}
-
 			this.isLoading = true
-			debounce(() => {
+			if (this.searchTimer) {
+				clearTimeout(this.searchTimer)
+			}
+
+			this.searchTimer = setTimeout(() => {
 				if (!this.value) {
-					this.isLoading = false
+					this.isLoading   = false
 					this.showResults = false
-					this.results = []
+					this.results     = []
 					return
 				}
 
 				this.showResults = true
 
 				this.ajaxSearch(this.value)
-					.then(() => (this.isLoading = false))
+					.finally(() => (this.isLoading = false))
 			}, 500)
 		},
-		ajaxSearch (query) {
-			return this.redirectsStore.getPosts({ query, postId: this.postEditorStore.currentPost.id })
-				.then((response) => {
-					this.results = response.body.objects
-				})
+		async ajaxSearch (query) {
+			const response = await this.redirectsStore.getPosts({ query, postId: this.postEditorStore.currentPost.id })
+			this.results   = response.body.objects
 		},
 		setUrl (url) {
 			this.showResults = false

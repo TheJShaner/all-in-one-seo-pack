@@ -1,8 +1,11 @@
 <template>
 	<div class="aioseo-ai-content-loader">
-		<div class="aioseo-ai-content-loader-image">
+		<div
+			v-if="loaderImage"
+			class="aioseo-ai-content-loader-image"
+		>
 			<img
-				:src="getLoaderImage(currentItem.slug)"
+				:src="loaderImage"
 				:alt="currentItem.label"
 			/>
 		</div>
@@ -10,6 +13,7 @@
 		<div class="aioseo-ai-content-loader-text">
 			<div class="loading-container">
 				<core-loader :dark="true" />
+
 				<div class="loading-text">{{ aiContent.loadingText(currentItem.name) }}</div>
 			</div>
 		</div>
@@ -63,6 +67,7 @@ onUnmounted(() => {
 })
 
 const currentItem = computed(() => props.loaders[currentIndex.value])
+const loaderImage = computed(() => getLoaderImage(currentItem.value.slug))
 
 const getLoaderImage = (slug) => {
 	switch (slug) {
@@ -94,33 +99,29 @@ const getLoaderImage = (slug) => {
 .aioseo-ai-content-loader {
 	display: flex;
 	margin-bottom: -20px;
+	flex-grow: 1;
 
 	.aioseo-ai-content-loader-image {
+		flex: 1 1 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		margin: -20px 0 0 -20px;
+		background-color: $blue2;
 
 		img {
-				max-width: 400px;
-				max-height: 400px;
-				padding: 50px;
-				height: auto;
+			max-width: 400px;
+			max-height: 400px;
+			padding: 50px;
+			height: auto;
 		}
 	}
 
-	>div {
+	.aioseo-ai-content-loader-text {
 		flex: 1 1 50%;
-
-		&:first-of-type {
-			margin: -20px 0 0 -20px;
-			background-color: $blue2;
-		}
-
-		&:last-of-type {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
+		display: flex;
+		align-items: center;
+		justify-content: center;
 
 		.loading-container {
 			display: flex;

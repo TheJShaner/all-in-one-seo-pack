@@ -160,6 +160,9 @@ import {
 
 import { useWpTable } from '@/vue/composables/WpTable'
 
+import { dateStringToLocalJs } from '@/vue/utils/date'
+import dateFormat from '@/vue/utils/dateFormat'
+
 import AddAdditionalPage from './partials/AddAdditionalPage'
 import CoreWpTable from '@/vue/components/common/core/wp/Table'
 import CoreCard from '@/vue/components/common/core/Card'
@@ -252,6 +255,8 @@ export default {
 				priority     : page.priority && page.priority.label ? page.priority.label : '',
 				frequency    : page.frequency && page.frequency.label ? page.frequency.label : '',
 				lastModified : page.lastModified
+					? dateFormat(dateStringToLocalJs(page.lastModified), `${this.rootStore.aioseo.data.dateFormat} ${this.rootStore.aioseo.data.timeFormat}`)
+					: ''
 			}))
 
 			const offset = 1 === this.pageNumber ? 0 : (this.pageNumber - 1) * this.resultsPerPage

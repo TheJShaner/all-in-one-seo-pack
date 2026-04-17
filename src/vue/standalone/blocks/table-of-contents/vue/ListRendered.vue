@@ -39,12 +39,12 @@ const props = defineProps({
 	}
 })
 
-const blockAttributes = ref(window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId))
+const blockAttributes = ref(window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId) || {})
 
 onMounted(() => {
 	nextTick(() => {
 		window.aioseoBus.$on('updateToc' + props.clientId, () => {
-			blockAttributes.value = window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId)
+			blockAttributes.value = window.wp.data.select('core/block-editor').getBlockAttributes(props.clientId) || {}
 		})
 	})
 })

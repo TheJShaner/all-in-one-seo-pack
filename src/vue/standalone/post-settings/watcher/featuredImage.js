@@ -1,7 +1,8 @@
 import emitter from 'tiny-emitter/instance'
 import { isBlockEditor, isClassicEditor, isClassicNoEditor } from '@/vue/utils/context'
 
-let prevValue
+const UNSET   = Symbol('unset')
+let prevValue = UNSET
 
 export default () => {
 	if (isBlockEditor()) {
@@ -9,18 +10,21 @@ export default () => {
 		const coreEditor            = select('core/editor')
 		subscribe(() => {
 			const featuredImage = coreEditor?.getEditedPostAttribute('featured_media')
-			if (!prevValue || prevValue !== featuredImage) {
+			if (prevValue !== featuredImage) {
 				emitter.emit('updateFeaturedImage', featuredImage)
 				prevValue = featuredImage
 			}
 		})
+
+		// wp.data.subscribe fires immediately with the current state, so no separate initial call needed.
+		return
 	}
 
 	if (isClassicEditor() || isClassicNoEditor()) {
 		const MutationObserver = window.MutationObserver || window.WebKitMutationObserver
 		const observer         = new MutationObserver(() => {
 			const featuredImage = document.getElementById('_thumbnail_id')?.value
-			if (!prevValue || prevValue !== featuredImage) {
+			if (prevValue !== featuredImage) {
 				emitter.emit('updateFeaturedImage', featuredImage)
 				prevValue = featuredImage
 			}

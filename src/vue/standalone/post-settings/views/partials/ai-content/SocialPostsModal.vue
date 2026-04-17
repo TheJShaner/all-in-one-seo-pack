@@ -121,7 +121,7 @@
 					type="gray"
 					@click="event => currentScreen = 'results'"
 				>
-					<span>{{ strings.viewPreviousResults }}</span>
+					<span>{{ aiContent.strings.viewPreviousResults }}</span>
 				</base-button>
 
 				<base-button
@@ -290,12 +290,11 @@ export default {
 		}
 
 		const strings = {
-			copy                : __('Copy', td),
-			copied              : __('Copied!', td),
-			step1               : __('Select tone and audience', td),
-			step2               : __('Select media to generate content for', td),
-			creditDisclaimer    : __('*10 credits will be charged for each selected option.', td),
-			viewPreviousResults : __('View Previous Results', td)
+			copy             : __('Copy', td),
+			copied           : __('Copied!', td),
+			step1            : __('Select tone and audience', td),
+			step2            : __('Select media to generate content for', td),
+			creditDisclaimer : __('*10 credits will be charged for each selected option.', td)
 		}
 
 		const socialOptions = [

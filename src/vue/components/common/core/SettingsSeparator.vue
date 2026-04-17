@@ -170,14 +170,14 @@ export default {
 			}
 
 			this.$emit('update:separator', sanitizeString(newVal))
-
-			if (this.separators.concat(this.moreSeparators).concat(this.decodedSeparators).concat(this.decodedMoreSeparators).includes(newVal)) {
-				this.customSeparator = null
-			}
 		}
 	},
 	computed : {
 		hiddenSeparator () {
+			if (this.decodedSeparators.includes(this.optionsSeparator)) {
+				return null
+			}
+
 			const decodedCustomSeparator = this.customSeparator ? sanitizeString(this.customSeparator) : null
 			return this.optionsSeparator === decodedCustomSeparator || this.decodedMoreSeparators.includes(this.optionsSeparator)
 				? this.optionsSeparator

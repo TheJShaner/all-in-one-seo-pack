@@ -74,7 +74,8 @@ export const useRedirectsStore = defineStore('RedirectsStore', {
 			redirectType         : null,
 			queryParam           : null,
 			customRules          : [],
-			showAdvancedSettings : false
+			showAdvancedSettings : false,
+			comment              : ''
 		}
 	}),
 	actions : {

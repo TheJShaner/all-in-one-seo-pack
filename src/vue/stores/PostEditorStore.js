@@ -6,7 +6,7 @@ let cachedCurrentPost = null
 
 const prepareCachedCurrentPost = (currentPost) => {
 	// Ignore UI state and analysis-related properties at any nesting level.
-	const ignore = new Set([ 'modalOpen', 'seo_score', 'page_analysis', 'headlineAnalyzer', 'loading', 'score', 'analysis' ])
+	const ignore = new Set([ 'modalOpen', 'seo_score', 'page_analysis', 'headlineAnalyzer', 'loading', 'score', 'analysis', 'ai' ])
 
 	return JSON.stringify(currentPost, (key, value) => ignore.has(key) ? undefined : value)
 }

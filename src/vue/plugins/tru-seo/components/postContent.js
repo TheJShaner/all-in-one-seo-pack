@@ -7,6 +7,7 @@ import TruSeo from '@/vue/plugins/tru-seo'
 import { customFieldsContent } from './customFields'
 import { getPostEditedPermalink } from './postPermalink'
 import { flattenBlocks } from '@/vue/utils/helpers'
+import { getEditorDocument } from '@/vue/utils/editor'
 import {
 	isBlockEditor,
 	isClassicEditor,
@@ -98,6 +99,7 @@ const getReusableBlockContent = (content) => {
  * @returns {string} Post content with block markup replaced by their content.
  */
 const getProcessedBlockContent = (content, prefix) => {
+	const editorDoc = getEditorDocument()
 	const blocks = window.wp.data.select('core/block-editor').getBlocks()
 	blocks.forEach(block => {
 		const [ namePrefix, nameSuffix ] = block.name.split('/')
@@ -112,7 +114,7 @@ const getProcessedBlockContent = (content, prefix) => {
 				return
 			}
 
-			const element = document.getElementById('block-' + block.clientId)
+			const element = editorDoc.getElementById('block-' + block.clientId)
 			if (element && element.innerText) {
 				const blockName = 'core' === namePrefix ? nameSuffix : block.name
 				const pattern = `<!-- wp:${blockName}.*?/wp:${blockName} -->|<!-- wp:${blockName}.*?/-->`

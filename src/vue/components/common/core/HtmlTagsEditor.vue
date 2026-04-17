@@ -234,6 +234,7 @@ export default {
 		a {
 			font-size: 12px;
 			line-height: 18px;
+			text-decoration: underline;
 
 			&.no-underline {
 				padding-left: 10px;

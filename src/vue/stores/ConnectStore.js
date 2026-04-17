@@ -4,8 +4,8 @@ import links from '@/vue/utils/links'
 
 import {
 	useLicenseStore,
-	useOptionsStore,
-	useSetupWizardStore
+	useSetupWizardStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 export const useConnectStore = defineStore('ConnectStore', {
@@ -13,10 +13,10 @@ export const useConnectStore = defineStore('ConnectStore', {
 	getters : {
 		isConnected : () => {
 			const licenseStore = useLicenseStore()
-			const optionsStore = useOptionsStore()
+			const sensitiveOptionsStore = useSensitiveOptionsStore()
 			return (
 				'pro' !== import.meta.env.VITE_VERSION.toLowerCase() &&
-				optionsStore.internalOptions.internal.siteAnalysis?.connectToken
+				sensitiveOptionsStore.hasSiteAnalysisConnectToken
 			) ||
 			licenseStore.license.isActive
 		}
@@ -39,8 +39,8 @@ export const useConnectStore = defineStore('ConnectStore', {
 				})
 		},
 		saveConnectToken (token) {
-			const optionsStore = useOptionsStore()
-			optionsStore.updateOption('internalOptions', { groups: [ 'internal', 'siteAnalysis' ], key: 'connectToken', value: token })
+			const sensitiveOptionsStore = useSensitiveOptionsStore()
+			sensitiveOptionsStore.hasSiteAnalysisConnectToken = true
 
 			return http.post(links.restUrl('connect'))
 				.send({

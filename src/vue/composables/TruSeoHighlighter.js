@@ -15,6 +15,11 @@ import {
 } from '@/vue/utils/context'
 
 import {
+	getEditorIframe,
+	isIframedEditor
+} from '@/vue/utils/editor'
+
+import {
 	normalizeWhitespaces,
 	reverseWindowSelection,
 	getClosestNodeByPropertyValue,
@@ -24,15 +29,67 @@ import {
 import TruSeoHighlightPopover from '@/vue/components/common/tru-seo/HighlightPopover'
 
 export const useTruSeoHighlighter = () => {
-	const editorObserver    = ref(null)
-	const editorWrapperRect = ref({})
-	const isBlockEditor     = isBlockEditorFunc()
-	const isClassicEditor   = isClassicEditorFunc()
-	const selectBlockEditor = window?.wp?.data?.select('core/block-editor')
-	const selectEditPost    = window?.wp?.data?.select('core/edit-post')
-	const tinymceEditor     = ref(null)
+	const editorObserver       = ref(null)
+	const editorWrapperRect    = ref({})
+	const iframeScrollHandler  = ref(null)
+	const isBlockEditor        = isBlockEditorFunc()
+	const isClassicEditor      = isClassicEditorFunc()
+	const isIframed            = ref(false)
+	const selectBlockEditor    = window?.wp?.data?.select('core/block-editor')
+	const selectEditPost       = window?.wp?.data?.select('core/edit-post')
+	const tinymceEditor        = ref(null)
 
 	const truSeoHighlighterStore = useTruSeoHighlighterStore()
+
+	const getEditorDocument = () => {
+		if (isIframed.value) {
+			return getEditorIframe()?.contentDocument || document
+		}
+
+		return document
+	}
+
+	const getEditorWindow = () => {
+		if (isIframed.value) {
+			return getEditorIframe()?.contentWindow || window
+		}
+
+		return window
+	}
+
+	const injectHighlightStyles = () => {
+		const editorDoc = getEditorDocument()
+		if (!editorDoc || editorDoc === document || !editorDoc.head) {
+			return
+		}
+
+		const styleId = 'aioseo-tru-seo-highlight-styles'
+		if (editorDoc.getElementById(styleId)) {
+			return
+		}
+
+		const style = editorDoc.createElement('style')
+		style.id = styleId
+		style.textContent = `
+			mark.annotation-text.annotation-text-${truSeoHighlighterStore.source},
+			span.annotation-text.annotation-text-${truSeoHighlighterStore.source} {
+				background-color: #CCE0FF;
+				color: inherit;
+				display: inline;
+				font-size: inherit;
+				font-weight: inherit;
+				letter-spacing: inherit;
+				line-height: inherit;
+				position: static;
+			}
+			.is-annotated-by-${truSeoHighlighterStore.source} {
+				background-color: #CCE0FF;
+				outline: 2px solid #CCE0FF;
+			}
+		`.trim()
+
+		editorDoc.head.appendChild(style)
+	}
 
 	const annotateBlock = async (highlightMark, selector = 'range') => {
 		let identifier = 'content' // E.g. "Paragraph" block.
@@ -100,7 +157,15 @@ export const useTruSeoHighlighter = () => {
 		selection.empty()
 	}
 
+	const removeIframeScrollListener = () => {
+		if (iframeScrollHandler.value) {
+			getEditorWindow().removeEventListener('scroll', iframeScrollHandler.value, true)
+			iframeScrollHandler.value = null
+		}
+	}
+
 	const appendHighlightPopover = () => {
+		removeIframeScrollListener()
 		truSeoHighlighterStore.clearHighlightPopover()
 		truSeoHighlighterStore.sanitizeHighlightMarks()
 		if (!truSeoHighlighterStore.activeMark) {
@@ -130,13 +195,33 @@ export const useTruSeoHighlighter = () => {
 			return false
 		}
 
-		editorWrapper.parentElement.appendChild(node)
+		if (isClassicEditor) {
+			editorWrapper.parentElement.appendChild(node)
+		} else if (isIframed.value) {
+			// Append outside the iframe so the Vue component's scoped styles (in the main document) apply correctly.
+			getEditorIframe().parentElement.appendChild(node)
+		} else {
+			editorWrapper.appendChild(node)
+		}
+
 		app.mount(node)
 		observer.observe(getEditorNode('wrapper'), { box: 'border-box' })
 
 		truSeoHighlighterStore.highlightPopover.app      = app
 		truSeoHighlighterStore.highlightPopover.node     = node
 		truSeoHighlighterStore.highlightPopover.observer = observer
+
+		if (isClassicEditor || isIframed.value) {
+			iframeScrollHandler.value = () => repositionHighlightPopover()
+			getEditorWindow().addEventListener('scroll', iframeScrollHandler.value, true)
+
+			// Forward wheel events from the popover to the iframe so scrolling works when hovering over it.
+			const iframeElement = isClassicEditor ? editorWrapper : getEditorIframe()
+			node.addEventListener('wheel', (e) => {
+				e.preventDefault()
+				iframeElement.contentWindow.scrollBy(0, e.deltaY)
+			}, { passive: false })
+		}
 
 		repositionHighlightPopover()
 	}
@@ -197,13 +282,13 @@ export const useTruSeoHighlighter = () => {
 
 		if (isBlockEditor) {
 			if ('wrapper' === which) {
-				return document.querySelector('.editor-styles-wrapper')
+				return getEditorDocument().querySelector('.editor-styles-wrapper .is-root-container')
 			}
 
 			if ('first-block' === which) {
 				const firstBlock = selectBlockEditor.getBlocks()[0]
 
-				return document.getElementById(`block-${firstBlock?.clientId}`) || {}
+				return getEditorDocument().getElementById(`block-${firstBlock?.clientId}`) || {}
 			}
 		}
 	}
@@ -243,7 +328,7 @@ export const useTruSeoHighlighter = () => {
 				// Trigger the observer callback. Helpful in case all the blocks present couldn't be annotated using a range.
 				if (lastMark) {
 					setTimeout(() => {
-						truSeoHighlighterStore.highlightMarks.at(-1)?.parent.classList.add('is-hovered')
+						truSeoHighlighterStore.highlightMarks.at(-1)?.parent?.classList.add('is-hovered')
 					}, 100)
 				}
 			}
@@ -284,11 +369,12 @@ export const useTruSeoHighlighter = () => {
 	}
 
 	const listenWindowCopy = (event) => {
+		const editorWin = getEditorWindow()
 		const modifyData = () => {
 			event.preventDefault()
-			event.clipboardData.setData('text/html', window.getSelection().toString())
+			event.clipboardData.setData('text/html', editorWin.getSelection().toString())
 		}
-		const selection = window.getSelection() || {}
+		const selection = editorWin.getSelection() || {}
 		if (!selection?.rangeCount) {
 			return false
 		}
@@ -320,7 +406,7 @@ export const useTruSeoHighlighter = () => {
 			return false
 		}
 
-		const selection = window.getSelection() || null
+		const selection = getEditorWindow().getSelection() || null
 		if (!selection?.toString()) {
 			return false
 		}
@@ -432,12 +518,18 @@ export const useTruSeoHighlighter = () => {
 					continue
 				}
 
+				const editorWrapper = getEditorNode('wrapper')
+				if (!editorWrapper) {
+					return
+				}
+
 				const hiddenEditorParent = getClosestNodeByPropertyValue({
-					element  : getEditorNode('wrapper')?.parentElement,
+					element  : editorWrapper.parentElement,
 					property : 'display',
 					value    : 'none'
 				})
-				if (!hiddenEditorParent.isEqualNode(document.documentElement)) {
+				const editorDocElement = (editorWrapper.ownerDocument || document).documentElement
+				if (!hiddenEditorParent?.isEqualNode(editorDocElement)) {
 					disallowHighlighting()
 
 					return false
@@ -509,35 +601,91 @@ export const useTruSeoHighlighter = () => {
 		}
 
 		const activeMarkNodePos = truSeoHighlighterStore.activeMark.node.getBoundingClientRect()
-		const editorNodePos = getEditorNode('wrapper').getBoundingClientRect()
-		const relativeEditorPos = getEditorNode('closest-relative').getBoundingClientRect()
-		const firstBlockNodePos = getEditorNode('first-block').getBoundingClientRect()
-		const [ navTooltipWidth, navTooltipHeight ] = [ 140, 32 ]
-		let top = activeMarkNodePos.top,
-			left = firstBlockNodePos.left - relativeEditorPos.left
 
-		if (navTooltipWidth < left) {
-			truSeoHighlighterStore.highlightPopover.node.style.top = top - relativeEditorPos.top + 'px'
-			truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(-105%, 0)'
-			truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'right'
+		if (isClassicEditor) {
+			const editorNodePos = getEditorNode('wrapper').getBoundingClientRect()
+			const relativeEditorPos = getEditorNode('closest-relative').getBoundingClientRect()
+			const firstBlockNodePos = getEditorNode('first-block').getBoundingClientRect()
+			const [ navTooltipWidth, navTooltipHeight ] = [ 140, 32 ]
+
+			let top = activeMarkNodePos.top,
+				left = firstBlockNodePos.left - relativeEditorPos.left
+
+			if (navTooltipWidth < left) {
+				truSeoHighlighterStore.highlightPopover.node.style.top = top - relativeEditorPos.top + 'px'
+				truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(-105%, 0)'
+				truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'right'
+			} else {
+				top = top - navTooltipHeight - relativeEditorPos.top + editorNodePos.top
+				left = left + editorNodePos.left
+
+				truSeoHighlighterStore.highlightPopover.node.style.top = top + 'px'
+				truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(0, 0)'
+				truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'bottomleft'
+			}
+
+			truSeoHighlighterStore.highlightPopover.node.style.left = left + 'px'
+		} else if (isIframed.value) {
+			// Popover lives outside the iframe, marks are inside it.
+			// Transform iframe-relative coordinates to main-document coordinates.
+			const iframeRect = getEditorIframe().getBoundingClientRect()
+			const relativeEditorPos = getClosestNodeByPropertyValue({
+				element  : getEditorIframe().parentElement,
+				property : 'position',
+				value    : 'relative'
+			}).getBoundingClientRect()
+			const firstBlockNodePos = getEditorNode('first-block').getBoundingClientRect()
+			const [ navTooltipWidth, navTooltipHeight ] = [ 140, 32 ]
+
+			let top = iframeRect.top + activeMarkNodePos.top - relativeEditorPos.top
+			const left = iframeRect.left + firstBlockNodePos.left - relativeEditorPos.left
+
+			if (navTooltipWidth < left) {
+				truSeoHighlighterStore.highlightPopover.node.style.top = top + 'px'
+				truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(-105%, 0)'
+				truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'right'
+			} else {
+				top = top - navTooltipHeight
+
+				truSeoHighlighterStore.highlightPopover.node.style.top = top + 'px'
+				truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(0, 0)'
+				truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'bottomleft'
+			}
+
+			truSeoHighlighterStore.highlightPopover.node.style.left = left + 'px'
 		} else {
-			top = top - navTooltipHeight - relativeEditorPos.top
-			top = isClassicEditor ? top + editorNodePos.top : top
-			left = isClassicEditor ? left + editorNodePos.left : left
+			// Position relative to the wrapper (.is-root-container) since the popover lives inside it.
+			const editorNodePos = getEditorNode('wrapper').getBoundingClientRect()
+			const firstBlockNodePos = getEditorNode('first-block').getBoundingClientRect()
+			const [ navTooltipWidth, navTooltipHeight ] = [ 140, 32 ]
 
-			truSeoHighlighterStore.highlightPopover.node.style.top = top + 'px'
-			truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(0, 0)'
-			truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'bottomleft'
+			let top = activeMarkNodePos.top - editorNodePos.top
+			const left = firstBlockNodePos.left - editorNodePos.left
+
+			if (navTooltipWidth < left) {
+				truSeoHighlighterStore.highlightPopover.node.style.top = top + 'px'
+				truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(-105%, 0)'
+				truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'right'
+			} else {
+				top = top - navTooltipHeight
+
+				truSeoHighlighterStore.highlightPopover.node.style.top = top + 'px'
+				truSeoHighlighterStore.highlightPopover.node.style.transform = 'translate(0, 0)'
+				truSeoHighlighterStore.highlightPopover.node.childNodes[0].dataset.arrowPlacement = 'bottomleft'
+			}
+
+			truSeoHighlighterStore.highlightPopover.node.style.left = left + 'px'
 		}
-
-		truSeoHighlighterStore.highlightPopover.node.style.left = left + 'px'
 
 		scrollToHighlightMark()
 	}
 
 	const reset = () => {
-		window.removeEventListener('copy', listenWindowCopy)
-		window.removeEventListener('keyup', listenWindowKeyup)
+		removeIframeScrollListener()
+
+		const editorWin = getEditorWindow()
+		editorWin.removeEventListener('copy', listenWindowCopy)
+		editorWin.removeEventListener('keyup', listenWindowKeyup)
 
 		editorObserver.value?.disconnect()
 		truSeoHighlighterStore.clearAll()
@@ -550,6 +698,10 @@ export const useTruSeoHighlighter = () => {
 				return false
 			}
 
+			if (isIframed.value) {
+				injectHighlightStyles()
+			}
+
 			if (isBlockEditor) {
 				highlightBlockEditor()
 			}
@@ -560,8 +712,9 @@ export const useTruSeoHighlighter = () => {
 
 			observeEditor()
 
-			window.addEventListener('copy', listenWindowCopy)
-			window.addEventListener('keyup', listenWindowKeyup)
+			const editorWinInner = getEditorWindow()
+			editorWinInner.addEventListener('copy', listenWindowCopy)
+			editorWinInner.addEventListener('keyup', listenWindowKeyup)
 		})
 	}
 
@@ -581,8 +734,9 @@ export const useTruSeoHighlighter = () => {
 				offset -= document.querySelector('#wp-content-editor-container .mce-toolbar-grp')?.getBoundingClientRect()?.height || 0
 			}
 
-			if (scrollable.isEqualNode(document.documentElement)) {
-				scrollable = window
+			const editorDoc = getEditorDocument()
+			if (scrollable.isEqualNode(editorDoc.documentElement)) {
+				scrollable = getEditorWindow()
 			}
 
 			scrollable.scrollTo({
@@ -649,7 +803,7 @@ export const useTruSeoHighlighter = () => {
 						id                : random(1, 999999999),
 						range             : range,
 						block             : block,
-						parent            : node || document.getElementById(`block-${block.clientId}`),
+						parent            : node || getEditorDocument().getElementById(`block-${block.clientId}`),
 						active            : 0 === truSeoHighlighterStore.highlightMarks.length,
 						sentenceIndex     : index,
 						sentence       	  : sentence,
@@ -705,12 +859,26 @@ export const useTruSeoHighlighter = () => {
 	}
 
 	onMounted(() => {
+		if (!truSeoHighlighterStore.enabled) {
+			return
+		}
+
 		if (truSeoHighlighterStore.wpBodyContentObserver) {
 			truSeoHighlighterStore.wpBodyContentObserver?.disconnect()
 		}
 
 		const interval = window.setInterval(() => {
-			if ('object' === typeof getEditorNode('wrapper')) {
+			if (!isIframed.value && isIframedEditor()) {
+				const iframe = getEditorIframe()
+				if (!iframe?.contentDocument?.head) {
+					return
+				}
+
+				isIframed.value = true
+				injectHighlightStyles()
+			}
+
+			if (null !== getEditorNode('wrapper')) {
 				window.clearInterval(interval)
 
 				observeWpBodyContent()

@@ -33,7 +33,8 @@ import {
 	usePostEditorStore,
 	useRootStore,
 	useSemrushStore,
-	useSettingsStore
+	useSettingsStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import TruSeo from '@/vue/plugins/tru-seo'
@@ -56,14 +57,15 @@ import SemrushKeywordsModal from './focus-keyphrase/SemrushKeywordsModal'
 export default {
 	setup () {
 		return {
-			connectStore    : useConnectStore(),
-			licenseStore    : useLicenseStore(),
-			optionsStore    : useOptionsStore(),
-			postEditorStore : usePostEditorStore(),
-			rootStore       : useRootStore(),
-			semrushStore    : useSemrushStore(),
-			settingsStore   : useSettingsStore(),
-			truSeo          : new TruSeo()
+			connectStore          : useConnectStore(),
+			licenseStore          : useLicenseStore(),
+			optionsStore          : useOptionsStore(),
+			postEditorStore       : usePostEditorStore(),
+			rootStore             : useRootStore(),
+			semrushStore          : useSemrushStore(),
+			settingsStore         : useSettingsStore(),
+			sensitiveOptionsStore : useSensitiveOptionsStore(),
+			truSeo                : new TruSeo()
 		}
 	},
 	components : {
@@ -112,7 +114,7 @@ export default {
 		async handleSemrushButtonClick () {
 			this.showSemrushTooltip = false
 
-			if (this.optionsStore.internalOptions.integrations.semrush.accessToken && this.semrushStore.expired) {
+			if (this.sensitiveOptionsStore.hasSemrushAccessToken && this.semrushStore.expired) {
 				await this.semrushStore.refresh()
 			}
 

@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import http from '@/vue/utils/http'
 import links from '@/vue/utils/links'
 import { __ } from '@/vue/plugins/translations'
 
 import {
 	useOptionsStore,
-	usePostEditorStore
+	usePostEditorStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 const td = import.meta.env.VITE_TEXTDOMAIN
@@ -23,14 +24,13 @@ export const useSemrushStore = defineStore('SemrushStore', {
 				return true
 			}
 
-			const now     = DateTime.now()
-			const expires = DateTime.fromMillis(parseInt(optionsStore.internalOptions.integrations.semrush.expires * 1000, 10))
+			const expires = dayjs(parseInt(optionsStore.internalOptions.integrations.semrush.expires * 1000, 10))
 
-			return now >= expires
+			return !dayjs().isBefore(expires)
 		},
 		hasValidTokens : (store) => {
-			const optionsStore = useOptionsStore()
-			return !store.expired && !!optionsStore.internalOptions.integrations.semrush.accessToken && !!optionsStore.internalOptions.integrations.semrush.refreshToken
+			const sensitiveOptionsStore = useSensitiveOptionsStore()
+			return !store.expired && sensitiveOptionsStore.hasSemrushAccessToken && sensitiveOptionsStore.hasSemrushRefreshToken
 		}
 	},
 	actions : {

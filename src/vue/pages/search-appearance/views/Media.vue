@@ -173,8 +173,8 @@ export default {
 			imageSeoKey       : 0,
 			internalDebounce  : false,
 			imageSeoActiveTab : {
-				slug : 'title',
-				name : __('Title', td),
+				slug : 'altTag',
+				name : __('Alt Tag', td),
 				pro  : true
 			},
 			strings : {
@@ -208,13 +208,13 @@ export default {
 				],
 				imageSeo : [
 					{
-						slug : 'title',
-						name : __('Title', td),
+						slug : 'altTag',
+						name : __('Alt Tag', td),
 						pro  : true
 					},
 					{
-						slug : 'altTag',
-						name : __('Alt Tag', td),
+						slug : 'title',
+						name : __('Title', td),
 						pro  : true
 					},
 					{

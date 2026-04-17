@@ -16,6 +16,7 @@ import VueBlock from './vue/Block'
 
 import { useAiContent } from '@/vue/composables/AiContent'
 import { observeElement } from '@/vue/utils/helpers'
+import { getEditorDocument } from '@/vue/utils/editor'
 import { maybeDeleteBlockVueApp } from '@/vue/standalone/blocks/utils'
 
 import { TranslateSelectorMenu } from './components/TranslateSelector'
@@ -62,7 +63,7 @@ export const settings = {
 
 		const blockAppId   = `aioseo-block-${clientId}`
 		const sidebarAppId = `aioseo-sidebar-${clientId}`
-		const $block       = document.getElementById(blockAppId)
+		const $block       = getEditorDocument().getElementById(blockAppId)
 
 		const $blockParent = document.querySelector('.block-editor')
 

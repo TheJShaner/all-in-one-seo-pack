@@ -25,7 +25,7 @@
 		</core-card>
 
 		<core-card
-			v-if="isProAndLicensed || optionsStore.internalOptions.internal.siteAnalysis.connectToken"
+			v-if="isProAndLicensed || sensitiveOptionsStore.hasSiteAnalysisConnectToken"
 			slug="completeSeoChecklist"
 			no-slide
 			:toggles="false"
@@ -55,9 +55,9 @@ import links from '@/vue/utils/links'
 import {
 	useAnalyzerStore,
 	useLicenseStore,
-	useOptionsStore,
 	useRootStore,
-	useSettingsStore
+	useSettingsStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import CoreCard from '@/vue/components/common/core/Card'
@@ -72,11 +72,11 @@ import { getSortedParts } from '@/vue/pages/seo-analysis/utils'
 import { __ } from '@/vue/plugins/translations'
 const td = import.meta.env.VITE_TEXTDOMAIN
 
-const analyzerStore = useAnalyzerStore()
-const licenseStore  = useLicenseStore()
-const optionsStore  = useOptionsStore()
-const rootStore     = useRootStore()
-const settingsStore = useSettingsStore()
+const analyzerStore         = useAnalyzerStore()
+const licenseStore          = useLicenseStore()
+const rootStore             = useRootStore()
+const settingsStore         = useSettingsStore()
+const sensitiveOptionsStore = useSensitiveOptionsStore()
 
 const strings = {
 	completeSeoChecklist : __('Site Audit Report', td),

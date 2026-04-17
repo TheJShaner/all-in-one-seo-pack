@@ -10,7 +10,7 @@
 		</core-card>
 
 		<core-card
-			v-if="(isLicensed || optionsStore.internalOptions.internal.siteAnalysis.connectToken) && !analyzerStore.analyzeError && analyzerStore.homeResults.score && !analyzerStore.analyzing"
+			v-if="(isLicensed || sensitiveOptionsStore.hasSiteAnalysisConnectToken) && !analyzerStore.analyzeError && analyzerStore.homeResults.score && !analyzerStore.analyzing"
 			slug="completeSeoChecklist"
 			no-slide
 			:toggles="false"
@@ -53,8 +53,8 @@ import links from '@/vue/utils/links'
 import {
 	useAnalyzerStore,
 	useLicenseStore,
-	useOptionsStore,
-	useRootStore
+	useRootStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import CoreCard from '@/vue/components/common/core/Card'
@@ -67,10 +67,10 @@ import SvgCircleQuestionMark from '@/vue/components/common/svg/circle/QuestionMa
 import { __ } from '@/vue/plugins/translations'
 const td = import.meta.env.VITE_TEXTDOMAIN
 
-const analyzerStore = useAnalyzerStore()
-const licenseStore  = useLicenseStore()
-const optionsStore  = useOptionsStore()
-const rootStore     = useRootStore()
+const analyzerStore         = useAnalyzerStore()
+const licenseStore          = useLicenseStore()
+const rootStore             = useRootStore()
+const sensitiveOptionsStore = useSensitiveOptionsStore()
 
 const isRefreshing = ref(false)
 

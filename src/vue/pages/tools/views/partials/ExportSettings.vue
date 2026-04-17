@@ -78,7 +78,7 @@ import {
 } from '@/vue/stores'
 
 import { allowed } from '@/vue/utils/AIOSEO_VERSION'
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import { useToolsSettings } from '@/vue/composables/ToolsSettings'
 
 import BaseCheckbox from '@/vue/components/common/base/Checkbox'
@@ -177,7 +177,7 @@ export default {
 
 			const link       = document.createElement('a')
 			link.href        = URL.createObjectURL(blob)
-			link.download    = `aioseo-export-${contentExporting}-${site}${DateTime.now().toFormat('yyyy-MM-dd')}.` + typeFile
+			link.download    = `aioseo-export-${contentExporting}-${site}${dayjs().format('YYYY-MM-DD')}.` + typeFile
 			link.click()
 			URL.revokeObjectURL(link.href)
 		},

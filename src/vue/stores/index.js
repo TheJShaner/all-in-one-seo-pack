@@ -4,6 +4,7 @@ import { useAddonsStore } from '@/vue/stores/AddonsStore'
 
 import { useAiAssistantStore } from '@/vue/stores/AiAssistantStore'
 import { useAiImageGeneratorStore } from '@/vue/stores/AiImageGeneratorStore'
+import { useAiSchemaGeneratorStore } from '@/vue/stores/AiSchemaGeneratorStore'
 import { useAiStore } from '@/vue/stores/AiStore'
 import { useAnalyzerStore } from '@/vue/stores/AnalyzerStore'
 import { useBackupsStore } from '@/vue/stores/BackupsStore'
@@ -25,6 +26,7 @@ import { useRedirectsStore } from '@/vue/stores/RedirectsStore'
 import { useRootStore } from '@/vue/stores/RootStore'
 import { useSchemaStore } from '@/vue/stores/SchemaStore'
 import { useSearchStatisticsStore } from '@/vue/stores/SearchStatisticsStore'
+import { useSensitiveOptionsStore } from '@/vue/stores/SensitiveOptionsStore'
 import { useSeoChecklistStore } from '@/vue/stores/SeoChecklistStore'
 import { useSeoPreviewStore } from '@/vue/stores/SeoPreviewStore'
 import { useSeoRevisionsStore } from '@/vue/stores/SeoRevisionsStore'
@@ -67,6 +69,7 @@ const loadPiniaStores = (app, router = null, loadStoresCallback = () => {}) => {
 	const addonsStore                   = useAddonsStore()
 	const aiAssistantStore              = useAiAssistantStore()
 	const aiImageGeneratorStore         = useAiImageGeneratorStore()
+	const aiStore                       = useAiStore()
 	const analyzerStore                 = useAnalyzerStore()
 	const backupsStore                  = useBackupsStore()
 	const dirtyOptionsStore             = useDirtyOptionsStore()
@@ -104,10 +107,15 @@ const loadPiniaStores = (app, router = null, loadStoresCallback = () => {}) => {
 	optionsStore.internalNetworkOptions = merge({ ...optionsStore.internalNetworkOptions }, { ...aioseo.internalNetworkOptions || {} })
 	optionsStore.networkOptions         = merge({ ...optionsStore.networkOptions }, { ...aioseo.networkOptions || {} })
 
+	// Sensitive options store.
+	const sensitiveOptionsStore           = useSensitiveOptionsStore()
+	sensitiveOptionsStore.$state          = merge({ ...sensitiveOptionsStore.$state }, { ...aioseo.sensitiveOptions || {} })
+
 	// Other stores.
 	addonsStore.addons                   = merge([ ...addonsStore.addons ], [ ...aioseo.addons || [] ])
 	aiAssistantStore.$state              = merge({ ...aiAssistantStore.$state }, { ...aioseo.aiAssistant || {} })
 	aiImageGeneratorStore.$state         = merge({ ...aiImageGeneratorStore.$state }, { ...aioseo.aiImageGenerator || {} })
+	aiStore.$state                       = merge({ ...aiStore.$state }, { ...aioseo.ai || {} })
 	analyzerStore.$state                 = merge({ ...analyzerStore.$state }, { ...aioseo.analyzer || {} })
 	backupsStore.backups                 = merge([ ...backupsStore.backups ], [ ...aioseo.backups || [] ])
 	backupsStore.networkBackups          = merge({ ...backupsStore.networkBackups }, { ...aioseo.data?.network?.backups || {} })
@@ -145,6 +153,7 @@ const loadPiniaStores = (app, router = null, loadStoresCallback = () => {}) => {
 
 	// Default AIOSEO root store without the above data.
 	delete aioseo.addons
+	delete aioseo.ai
 	delete aioseo.aiAssistant
 	delete aioseo.aiImageGenerator
 	delete aioseo.analyzer
@@ -164,6 +173,7 @@ const loadPiniaStores = (app, router = null, loadStoresCallback = () => {}) => {
 	delete aioseo.plugins
 	delete aioseo.redirects
 	delete aioseo.searchStatistics
+	delete aioseo.sensitiveOptions
 	delete aioseo.seoChecklist
 	delete aioseo.seoRevisions
 	delete aioseo.settings
@@ -249,6 +259,7 @@ export {
 	useAddonsStore,
 	useAiAssistantStore,
 	useAiImageGeneratorStore,
+	useAiSchemaGeneratorStore,
 	useAiStore,
 	useAnalyzerStore,
 	useBackupsStore,
@@ -270,6 +281,7 @@ export {
 	useRootStore,
 	useSchemaStore,
 	useSearchStatisticsStore,
+	useSensitiveOptionsStore,
 	useSeoChecklistStore,
 	useSemrushStore,
 	useSeoPreviewStore,

@@ -6,20 +6,21 @@ import { __ } from '@/vue/plugins/translations'
 import {
 	useNotificationsStore,
 	useOptionsStore,
-	useRootStore
+	useRootStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 const td = import.meta.env.VITE_TEXTDOMAIN
 
 const innerLicenseNoticeLink = () => {
 	// Inner link.
-	const rootStore  = useRootStore()
-	const innerLink  = document.createElement('a')
-	innerLink.href   = rootStore.aioseo.urls.aio.settings
+	const rootStore = useRootStore()
+	const innerLink = document.createElement('a')
+	innerLink.href = rootStore.aioseo.urls.aio.settings
 	innerLink.classList.add('ab-item')
 
 	// Inner span.
-	const innerSpan     = document.createElement('span')
+	const innerSpan = document.createElement('span')
 	innerSpan.innerText = __('Add License Key', td)
 	innerSpan.classList.add('aioseo-menu-highlight')
 	innerSpan.classList.add('green')
@@ -42,15 +43,8 @@ export const useLicenseStore = defineStore('LicenseStore', {
 	}),
 	getters : {
 		isUnlicensed : state => 'pro' !== import.meta.env.VITE_VERSION.toLowerCase() || !state.license.isActive,
-		licenseKey   : () => {
+		counts       : () => {
 			const rootStore = useRootStore()
-			const optionsStore = useOptionsStore()
-			return rootStore.aioseo.data.isNetworkAdmin
-				? optionsStore.networkOptions.general.licenseKey
-				: optionsStore.options.general.licenseKey
-		},
-		counts : () => {
-			const rootStore    = useRootStore()
 			const optionsStore = useOptionsStore()
 			let counts = rootStore.aioseo.data.isNetworkAdmin
 				? optionsStore.internalNetworkOptions.internal.license?.counts
@@ -63,7 +57,7 @@ export const useLicenseStore = defineStore('LicenseStore', {
 			return counts
 		},
 		upgradeUrl : () => {
-			const rootStore    = useRootStore()
+			const rootStore = useRootStore()
 			const optionsStore = useOptionsStore()
 
 			return rootStore.aioseo.data.isNetworkAdmin
@@ -74,17 +68,26 @@ export const useLicenseStore = defineStore('LicenseStore', {
 	actions : {
 		activate (key) {
 			const notificationsStore = useNotificationsStore()
-			const rootStore          = useRootStore()
+			const optionsStore = useOptionsStore()
+			const rootStore = useRootStore()
+			const sensitiveOptionsStore = useSensitiveOptionsStore()
+
+			const payload = {
+				network : rootStore.aioseo.data.isNetworkAdmin
+			}
+
+			if (key) {
+				payload.licenseKey = key.trim()
+			}
 
 			return http.post(links.restUrl('activate'))
-				.send({
-					licenseKey : key.trim(),
-					network    : rootStore.aioseo.data.isNetworkAdmin
-				})
+				.send(payload)
 				.then(response => {
-					const optionsStore = useOptionsStore()
-					const store        = rootStore.aioseo.data.isNetworkAdmin ? 'networkOptions' : 'options'
-					optionsStore.updateOption(store, { groups: [ 'general' ], key: 'licenseKey', value: key })
+					if (rootStore.aioseo.data.isNetworkAdmin) {
+						sensitiveOptionsStore.hasNetworkLicenseKey = true
+					} else {
+						sensitiveOptionsStore.hasLicenseKey = true
+					}
 
 					notificationsStore.updateNotifications(response.body.notifications)
 
@@ -127,7 +130,7 @@ export const useLicenseStore = defineStore('LicenseStore', {
 		},
 		multisite (sites) {
 			const notificationsStore = useNotificationsStore()
-			const rootStore          = useRootStore()
+			const rootStore = useRootStore()
 
 			return http.post(links.restUrl('multisite'))
 				.send({
@@ -147,16 +150,20 @@ export const useLicenseStore = defineStore('LicenseStore', {
 		},
 		deactivate () {
 			const notificationsStore = useNotificationsStore()
-			const rootStore          = useRootStore()
+			const optionsStore = useOptionsStore()
+			const rootStore = useRootStore()
+			const sensitiveOptionsStore = useSensitiveOptionsStore()
 
 			return http.post(links.restUrl('deactivate'))
 				.send({
 					network : rootStore.aioseo.data.isNetworkAdmin
 				})
 				.then(response => {
-					const optionsStore = useOptionsStore()
-					const store        = rootStore.aioseo.data.isNetworkAdmin ? 'networkOptions' : 'options'
-					optionsStore.updateOption(store, { groups: [ 'general' ], key: 'licenseKey', value: null })
+					if (rootStore.aioseo.data.isNetworkAdmin) {
+						sensitiveOptionsStore.hasNetworkLicenseKey = false
+					} else {
+						sensitiveOptionsStore.hasLicenseKey = false
+					}
 
 					notificationsStore.updateNotifications(response.body.notifications)
 

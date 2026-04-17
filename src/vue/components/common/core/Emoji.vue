@@ -239,7 +239,7 @@ export default {
 			document.addEventListener('mousedown', this.documentClick)
 		},
 		stopListening () {
-			document.removeEventListener('keydown', this.escapeListener)
+			document.removeEventListener('keydown', this.escapeListener, true)
 			document.removeEventListener('mousedown', this.documentClick)
 		},
 		getModal () {

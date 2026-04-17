@@ -179,14 +179,12 @@ export default {
 			}
 		},
 		feedbackUrl () {
-			const key = this.optionsStore.options.general && this.licenseStore.licenseKey ? this.licenseStore.licenseKey : ''
 			const pro = this.rootStore.isPro ? 'pro' : 'lite'
 			return links.utmUrl(
 				'notification-review-notice',
 				this.rootStore.aioseo.version,
 				'https://aioseo.com/plugin-feedback/' +
 					'?wpf7528_24=' + encodeURIComponent(this.rootStore.aioseo.urls.home) +
-					'&wpf7528_26=' + key +
 					'&wpf7528_27=' + pro +
 					'&wpf7528_28=' + this.rootStore.aioseo.version
 			)

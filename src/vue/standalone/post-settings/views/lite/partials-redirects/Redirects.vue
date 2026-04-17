@@ -9,6 +9,7 @@
 			/>
 
 			<core-modal
+				modal-name="post-settings-sidebar-redirects"
 				:show="postEditorStore.currentPost.redirects.modalOpen && 'sidebar' === $root.$data.screenContext"
 				:classes="[ 'aioseo-redirects' ]"
 				@close="postEditorStore.currentPost.redirects.modalOpen = false"
@@ -54,6 +55,7 @@
 			</div>
 
 			<core-modal
+				modal-name="post-settings-sidebar-redirects"
 				:show="postEditorStore.currentPost.redirects.modalOpen && 'sidebar' === $root.$data.screenContext"
 				:classes="[ 'aioseo-redirects' ]"
 				@close="postEditorStore.currentPost.redirects.modalOpen = false"

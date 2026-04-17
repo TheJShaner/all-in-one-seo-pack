@@ -23,7 +23,7 @@ export default {
 		}
 	},
 	mounted () {
-		import('lottie-web').then(({ default: lottie }) => {
+		import('lottie-web/build/player/lottie_light.min.js').then(({ default: lottie }) => {
 			this.anim = lottie.loadAnimation({
 				container        : this.$refs.lavContainer,
 				renderer         : 'svg',

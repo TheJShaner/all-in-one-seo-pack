@@ -160,7 +160,7 @@ const getUpsellLink = (medium, content, text, link, addArrow = false) => {
 		)
 		: ''
 	return sprintf(
-		'<a href="%1$s" target="_blank">%2$s</a>%3$s',
+		'<a href="%1$s" class="underline" target="_blank">%2$s</a>%3$s',
 		getUpsellUrl(medium, content, link),
 		text,
 		arrow
@@ -170,19 +170,27 @@ const getUpsellLink = (medium, content, text, link, addArrow = false) => {
 const getPlainLink = (text, url, addArrow = false, openInNewTab = true) => {
 	const target = openInNewTab ? 'target="_blank"' : '_self'
 
-	const arrow = addArrow
-		? sprintf(
+	const mainLink = sprintf(
+		`<a href="%1$s" target="${target}">%2$s</a>`,
+		url,
+		text
+	)
+
+	if ('back' === addArrow) {
+		return sprintf(
+			`<a href="%1$s" class="no-underline" target="${target}">&larr;&nbsp;</a>`,
+			url
+		) + mainLink
+	}
+
+	if (addArrow) {
+		return mainLink + sprintf(
 			`<a href="%1$s" class="no-underline" target="${target}">&nbsp;&rarr;</a>`,
 			url
 		)
-		: ''
+	}
 
-	return sprintf(
-		`<a href="%1$s" target="${target}">%2$s</a>%3$s`,
-		url,
-		text,
-		arrow
-	)
+	return mainLink
 }
 
 const getDocLink = (text, link, addArrow = false) => {

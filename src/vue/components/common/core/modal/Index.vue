@@ -106,10 +106,7 @@ export default {
 	watch : {
 		show (show) {
 			if (show) {
-				this.startListening()
-				this.scrollToElement()
-
-				this.rootStore.setActiveModal(this.modalName || this.$.uid)
+				this.openModal()
 
 				return
 			}
@@ -130,11 +127,22 @@ export default {
 		}
 	},
 	methods : {
+		openModal () {
+			// Register as active before scroll/DOM work so ESC and backdrop always match rootStore.modals.active.
+			this.rootStore.setActiveModal(this.modalName || this.$.uid)
+			this.startListening()
+			this.scrollToElement()
+		},
 		scrollToElement () {
-			const container = this.$el.getElementsByClassName ? this.$el.getElementsByClassName('component-wrapper')[0] : null
+			const root = this.$el
+			if (!root || !root.getElementsByClassName) {
+				return
+			}
+
+			const container = root.getElementsByClassName('component-wrapper')[0] || null
 			setTimeout(() => {
-				if (container) {
-					container.firstChild.scrollTop = 0
+				if (container && container?.firstElementChild) {
+					container.firstElementChild.scrollTop = 0
 				}
 			}, 10)
 		},
@@ -153,7 +161,7 @@ export default {
 			document.addEventListener('keydown', this.escapeListener, true)
 		},
 		stopListening () {
-			document.removeEventListener('keydown', this.escapeListener)
+			document.removeEventListener('keydown', this.escapeListener, true)
 		},
 		closeModal () {
 			this.$emit('close')
@@ -169,7 +177,15 @@ export default {
 
 		this.rootStore.modals.rendered.add(this.modalName)
 	},
+	mounted () {
+		if (this.show && this.shouldRender) {
+			this.openModal()
+		}
+	},
 	beforeUnmount () {
+		this.stopListening()
+		this.rootStore.unsetActiveModal(this.modalName || this.$.uid)
+
 		if (!this.modalName) {
 			return
 		}
@@ -193,6 +209,9 @@ export default {
 		background-color: rgba(0, 32, 80, 0.3);
 		transition: opacity 0.3s ease;
 		backdrop-filter: blur(1.5px);
+		// Let clicks pass through to .modal-wrapper (backdrop close). Otherwise the mask can
+		// receive pointer events and @click on .modal-wrapper never runs (seen with redirects modal).
+		pointer-events: none;
 
 		@media screen and (max-width: 520px) {
 			display: block;
@@ -207,6 +226,7 @@ export default {
 		left: 0;
 		width: 100%;
 		height: 100%;
+		pointer-events: auto;
 		display: flex;
 		align-items: center;
 		justify-content: center;

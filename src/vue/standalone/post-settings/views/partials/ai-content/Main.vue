@@ -23,14 +23,14 @@
 		<div class="aioseo-ai-content-main-body">
 			<core-alert
 				class="aioseo-ai-content-no-content-warning"
-				v-if="postContentLength < 200"
+				v-if="postContentLength < minContentLength"
 				type="red"
 			>
-				{{ strings.noContentWarning }}
+				{{ noContentWarning }}
 			</core-alert>
 
 			<core-alert
-				v-if="optionsStore.internalOptions.internal.ai.accessToken && optionsStore.internalOptions.internal.ai.isTrialAccessToken"
+				v-if="sensitiveOptionsStore.hasAiAccessToken && optionsStore.internalOptions.internal.ai.isTrialAccessToken"
 				class="aioseo-ai-content-trial-warning"
 				type="blue"
 				v-html="strings.trialWarning"
@@ -50,7 +50,12 @@
 </template>
 
 <script>
-import { useOptionsStore } from '@/vue/stores'
+import { useAiContent } from '@/vue/composables/AiContent'
+
+import {
+	useOptionsStore,
+	useSensitiveOptionsStore
+} from '@/vue/stores'
 
 import CoreAlert from '@/vue/components/common/core/alert/Index'
 import CreditCounter from '@/vue/components/common/ai/CreditCounter'
@@ -58,7 +63,6 @@ import FeatureCard from './FeatureCard'
 
 import { getAiFeatures } from './utils'
 import { isBlockEditor, isClassicEditor, isPageBuilderEditor } from '@/vue/utils/context'
-import { getPostEditedContent } from '@/vue/plugins/tru-seo/components/postContent'
 
 import { debounce } from 'lodash-es'
 import links from '@/vue/utils/links'
@@ -66,20 +70,16 @@ import links from '@/vue/utils/links'
 import { __, sprintf } from '@/vue/plugins/translations'
 const td = import.meta.env.VITE_TEXTDOMAIN
 
-const getCleanedContent = () => {
-	// Replace HTML tags with empty strings.
-	return getPostEditedContent()
-		.replace(/<\/?[a-z][^>]*?>/gi, '')
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.trim()
-}
-
 export default {
 	setup () {
-		const optionsStore = useOptionsStore()
+		const aiContent             = useAiContent()
+		const optionsStore          = useOptionsStore()
+		const sensitiveOptionsStore = useSensitiveOptionsStore()
 
 		return {
-			optionsStore
+			aiContent,
+			optionsStore,
+			sensitiveOptionsStore
 		}
 	},
 	components : {
@@ -92,13 +92,10 @@ export default {
 	},
 	data () {
 		return {
-			getPostEditedContent,
-			getCleanedContent,
 			features          : getAiFeatures(),
 			postContentLength : 0,
 			strings           : {
 				aiContentGeneration : __('AI Content Generation', td),
-				noContentWarning    : __('Your post is too short to generate AI content. Please add more content. For the best results, we recommend adding at least 200 characters.', td),
 				trialWarning        : sprintf(
 					// Translators: 1 - "upgrade to Pro" link, 2 - "purchase PAYG credits" link.
 					__('You can try out our AI features for free, enjoy! To unlock additional AI credits, %1$s or %2$s.', td),
@@ -116,6 +113,14 @@ export default {
 			}
 		}
 	},
+	computed : {
+		minContentLength () {
+			return this.aiContent.minContentLength
+		},
+		noContentWarning () {
+			return this.aiContent.strings.noContentWarning
+		}
+	},
 	methods : {
 		isButtonDisabled (feature) {
 			if (
@@ -125,7 +130,7 @@ export default {
 				return false
 			}
 
-			return 500 > this.postContentLength
+			return this.minContentLength > this.postContentLength
 		},
 		updateContentLength (length) {
 			this.postContentLength = length
@@ -133,7 +138,7 @@ export default {
 		watchBlockEditor () {
 			window.wp.data.subscribe(() => {
 				debounce(() => {
-					this.updateContentLength(this.getCleanedContent().length)
+					this.updateContentLength(this.aiContent.getPostContentLength())
 				}, 500)()
 			})
 		},
@@ -142,34 +147,22 @@ export default {
 				return
 			}
 
+			const updateLength = () => this.updateContentLength(this.aiContent.getPostContentLength())
+
 			if (document.querySelector('#wp-content-wrap.tmce-active')) {
-				// tinyMCE Content Update.
-				window.tinyMCE.get('content').on('keyup', () => {
-					const contentLength = window.tinyMCE.get('content').getContent({ format: 'raw' }).length
-					this.updateContentLength(contentLength)
-				})
-				window.tinyMCE.get('content').on('paste', () => {
-					const contentLength = window.tinyMCE.get('content').getContent({ format: 'raw' }).length
-					this.updateContentLength(contentLength)
-				})
+				window.tinyMCE.get('content').on('keyup', updateLength)
+				window.tinyMCE.get('content').on('paste', updateLength)
 			} else {
-				// No TinyMCE. Look for a proper #content textarea.
 				const textEditor = document.querySelector('textarea#content')
 				if (textEditor) {
-					textEditor.addEventListener('keyup', () => {
-						const contentLength = textEditor.value.length
-						this.updateContentLength(contentLength)
-					})
-					textEditor.addEventListener('paste', () => {
-						const contentLength = textEditor.value.length
-						this.updateContentLength(contentLength)
-					})
+					textEditor.addEventListener('keyup', updateLength)
+					textEditor.addEventListener('paste', updateLength)
 				}
 			}
 		},
 		watchPageBuilderEditor () {
 			window.aioseoBus.$on('aioseo-content-changed', () => {
-				this.updateContentLength(this.getCleanedContent().length)
+				this.updateContentLength(this.aiContent.getPostContentLength())
 			})
 		},
 		initWatchers () {
@@ -183,7 +176,7 @@ export default {
 		}
 	},
 	beforeMount () {
-		this.updateContentLength(this.getCleanedContent().length)
+		this.updateContentLength(this.aiContent.getPostContentLength())
 		this.initWatchers()
 	},
 	beforeUnmount () {

@@ -55,14 +55,12 @@ const getFeaturedImage = async () => {
 		return ''
 	}
 
-	const attachment  = wp.media.attachment(FusionApp.getDynamicPost('post_meta')._thumbnail_id)
-	let featuredImage = ''
+	const attachment = wp.media.attachment(FusionApp.getDynamicPost('post_meta')._thumbnail_id)
+	if (!attachment.get('url')) {
+		await attachment.fetch()
+	}
 
-	await attachment.fetch().then(() => {
-		featuredImage = attachment.get('url')
-	})
-
-	return featuredImage
+	return attachment.get('url') || ''
 }
 
 /**

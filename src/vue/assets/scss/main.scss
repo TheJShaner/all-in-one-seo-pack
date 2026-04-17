@@ -1,3 +1,4 @@
+@use 'sass:meta';
 @use 'app/variables.scss' as *;
 @use 'app/table-widefat.scss' as *;
 
@@ -325,37 +326,7 @@ body[class*="page_aioseo"] {
 		}
 	}
 
-	.popper {
-		text-align: left;
-		font-size: 12px;
-		padding: 20px;
-		background-color: #fff;
-		border: none;
-		border-radius: 3px;
-		box-shadow: 0px 3px 4.8px 0px rgba(32, 71, 102, 0.27);
-		z-index: 9999;
-		max-width: 350px;
-		line-height: 1.4;
-		white-space: normal;
-
-		&.action {
-			padding: 8px 12px;
-			background-color: $black;
-			color: #fff;
-
-			.popper__arrow {
-				border-top-color: $black;
-			}
-		}
-
-		&[x-placement^="bottom"] {
-			box-shadow: 0px 2px 4.8px 0px rgba(32, 71, 102, 0.27)
-		}
-
-		.aioseo-description {
-			margin: 0;
-		}
-	}
+	@include meta.load-css('app/popper');
 
 	.aioseo-row-highlight {
 		animation: aioseo-highlight-pulse 1.5s ease-in-out 3;
@@ -374,6 +345,10 @@ body[class*="page_aioseo"] {
 				box-shadow: 0 0 0 0 transparent;
 			}
 		}
+	}
+
+	.underline {
+		text-decoration: underline;
 	}
 }
 

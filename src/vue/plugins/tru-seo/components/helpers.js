@@ -15,6 +15,7 @@ import { maybeUpdatePostContent } from './postContent'
 import { maybeUpdatePostExcerpt } from './postExcerpt'
 import { maybeUpdatePostSlug } from './postSlug'
 import { maybeUpdatePermalink } from './postPermalink'
+import { maybeUpdateFeaturedImage } from './postFeaturedImage'
 import { maybeUpdateTaxonomies } from './taxonomies'
 import { maybeUpdateTerm } from './term'
 import { maybeUpdateAttachment } from './attachments'
@@ -55,6 +56,7 @@ export const maybeUpdatePost = async (time = 900, run = true) => {
 		await maybeUpdatePostExcerpt(false)
 		await maybeUpdatePostSlug(false)
 		await maybeUpdatePermalink(false)
+		await maybeUpdateFeaturedImage()
 		maybeUpdateTaxonomies(false)
 		maybeUpdateTerm(false)
 		maybeUpdateAttachment(false)
@@ -79,7 +81,7 @@ export const maybeUpdatePost = async (time = 900, run = true) => {
  */
 export const reverseWindowSelection = (selection) => {
 	const selectionRange = selection.getRangeAt(0)
-	const cloneRange = selectionRange.cloneRange()
+	const cloneRange     = selectionRange.cloneRange()
 
 	cloneRange.collapse(false)
 	selection.removeAllRanges()
@@ -117,21 +119,25 @@ export const normalizeWhitespaces = (string) => {
  * @returns {Element}                  The closest element with the specified property value, or the html root element if not found.
  */
 export const getClosestNodeByPropertyValue = ({ element, property, value }) => {
+	const ownerDoc = element?.ownerDocument || document
+
 	if (!element) {
-		return document.documentElement
+		return ownerDoc.documentElement
 	}
 
 	let parent = element.parentElement
 	while (parent) {
 		if (
-			parent.isEqualNode(document.documentElement) ||
-			value === document.defaultView.getComputedStyle(parent).getPropertyValue(property)
+			parent.isEqualNode(ownerDoc.documentElement) ||
+			value === ownerDoc.defaultView?.getComputedStyle(parent).getPropertyValue(property)
 		) {
 			return parent
 		}
 
 		parent = parent.parentElement
 	}
+
+	return ownerDoc.documentElement
 }
 
 /**
@@ -146,8 +152,8 @@ export const createHighlightPopoverNode = () => {
 
 	el.classList.add('aioseo-app')
 	el.style.position = 'absolute'
-	el.style.zIndex = '999'
-	el.style.display = 'flex'
+	el.style.zIndex   = '999'
+	el.style.display  = 'flex'
 	el.setAttribute('tabindex', -1)
 
 	return el

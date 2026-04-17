@@ -2,10 +2,6 @@ import { sanitizeString } from '@/vue/utils/strings'
 
 export const useDirtyOptions = () => {
 	const replacer = (key, value) => {
-		if ('licenseKey' === key) {
-			value = ''
-		}
-
 		if ('rules' === key && Array.isArray(value)) {
 			value.forEach((rule, index) => {
 				const r = JSON.parse(rule)

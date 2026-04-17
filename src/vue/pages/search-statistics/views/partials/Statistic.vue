@@ -47,7 +47,7 @@ import {
 	useSearchStatisticsStore
 } from '@/vue/stores'
 
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import numbers from '@/vue/utils/numbers'
 import dateFormat from '@/vue/utils/dateFormat'
 
@@ -122,10 +122,10 @@ export default {
 				: __('Down', td)
 
 			const startDate = this.searchStatisticsStore.shouldShowSampleReports
-				? DateTime.now().minus({ days: 14 }).toFormat('yyyy-MM-dd')
+				? dayjs().subtract(14, 'day').format('YYYY-MM-DD')
 				: this.searchStatisticsStore.range.compareStart
 			const endDate = this.searchStatisticsStore.shouldShowSampleReports
-				? DateTime.now().minus({ days: 7 }).toFormat('yyyy-MM-dd')
+				? dayjs().subtract(7, 'day').format('YYYY-MM-DD')
 				: this.searchStatisticsStore.range.compareEnd
 
 			const compareStart = new Date(`${startDate} 00:00:00`)

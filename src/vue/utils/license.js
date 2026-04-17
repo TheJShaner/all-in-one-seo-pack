@@ -1,6 +1,7 @@
 import {
 	useOptionsStore,
-	useRootStore
+	useRootStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import { getJsonValue } from '@/vue/utils/json'
@@ -17,9 +18,10 @@ const levels = {
 }
 
 const getFeatures = (type = '') => {
-	const optionsStore = useOptionsStore()
-	const rootStore    = useRootStore()
-	const features     = rootStore.aioseo.data.isNetworkLicensed && !optionsStore.options.general.licenseKey
+	const optionsStore          = useOptionsStore()
+	const rootStore             = useRootStore()
+	const sensitiveOptionsStore = useSensitiveOptionsStore()
+	const features              = rootStore.aioseo.data.isNetworkLicensed && !sensitiveOptionsStore.hasLicenseKey
 		? optionsStore.internalNetworkOptions.internal.license?.features || []
 		: optionsStore.internalOptions.internal.license?.features || []
 	let allFeatures = getJsonValue(features, [])
@@ -64,9 +66,10 @@ const hasAddonFeature = (slug, feature) => {
 }
 
 const hasMinimumLevel = (level) => {
-	const optionsStore = useOptionsStore()
-	const rootStore    = useRootStore()
-	const currentLevel = rootStore.aioseo.data.isNetworkLicensed && !optionsStore.options.general.licenseKey
+	const optionsStore          = useOptionsStore()
+	const rootStore             = useRootStore()
+	const sensitiveOptionsStore = useSensitiveOptionsStore()
+	const currentLevel          = rootStore.aioseo.data.isNetworkLicensed && !sensitiveOptionsStore.hasLicenseKey
 		? optionsStore.internalNetworkOptions.internal.license?.level
 		: optionsStore.internalOptions.internal.license?.level
 

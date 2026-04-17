@@ -1,7 +1,7 @@
 <template>
 	<div class="aioseo-seo-site-score">
 		<core-blur
-			v-if="!optionsStore.internalOptions.internal.siteAnalysis.connectToken"
+			v-if="!sensitiveOptionsStore.hasSiteAnalysisConnectToken"
 		>
 			<core-site-score-analyze
 				:score="85"
@@ -10,7 +10,7 @@
 		</core-blur>
 
 		<div
-			v-if="!optionsStore.internalOptions.internal.siteAnalysis.connectToken"
+			v-if="!sensitiveOptionsStore.hasSiteAnalysisConnectToken"
 			class="aioseo-seo-site-score-cta"
 		>
 			<a
@@ -20,7 +20,7 @@
 		</div>
 
 		<core-site-score-analyze
-			v-if="optionsStore.internalOptions.internal.siteAnalysis.connectToken"
+			v-if="sensitiveOptionsStore.hasSiteAnalysisConnectToken"
 			:score="score"
 			:description="description"
 			:loading="analyzerStore.analyzing"
@@ -36,8 +36,8 @@ import { ref, watch, computed, onMounted } from 'vue'
 import {
 	useAnalyzerStore,
 	useConnectStore,
-	useOptionsStore,
-	useRootStore
+	useRootStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import { popup } from '@/vue/utils/popup'
@@ -56,10 +56,10 @@ const {
 	score
 })
 
-const analyzerStore = useAnalyzerStore()
-const connectStore  = useConnectStore()
-const optionsStore  = useOptionsStore()
-const rootStore     = useRootStore()
+const analyzerStore         = useAnalyzerStore()
+const connectStore          = useConnectStore()
+const rootStore             = useRootStore()
+const sensitiveOptionsStore = useSensitiveOptionsStore()
 
 watch(() => analyzerStore.homeResults.score, (newVal) => {
 	score.value = newVal
@@ -111,7 +111,7 @@ const closedCallback = (reload) => {
 }
 
 onMounted(() => {
-	if (!analyzerStore.homeResults.score && optionsStore.internalOptions.internal.siteAnalysis.connectToken) {
+	if (!analyzerStore.homeResults.score && sensitiveOptionsStore.hasSiteAnalysisConnectToken) {
 		analyzerStore.runSiteAnalyzer()
 	}
 

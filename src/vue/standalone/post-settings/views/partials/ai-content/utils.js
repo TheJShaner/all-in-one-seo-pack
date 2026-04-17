@@ -1,7 +1,8 @@
 import { isBlockEditor, isClassicEditor } from '@/vue/utils/context'
 import {
 	useAiAssistantStore,
-	usePostEditorStore
+	usePostEditorStore,
+	useSchemaStore
 } from '@/vue/stores'
 
 import { __ } from '@/vue/plugins/translations'
@@ -69,6 +70,23 @@ export const aiFeatures = {
 		},
 		excludedPostTypes : [],
 		isPopular         : true
+	},
+	schemas : {
+		slug    : 'schemas',
+		svg     : 'sparkles',
+		strings : {
+			name         : __('Schema Generator', td),
+			description  : __('Generate AI-powered structured data schemas to help search engines better understand your content.', td),
+			buttonSubmit : __('Generate Schema', td)
+		},
+		excludedPostTypes : [],
+		clickCallback     : async () => {
+			const schemaStore          = useSchemaStore()
+			schemaStore.tabs.generator = 'ai-schema'
+			schemaStore.modalOpen      = true
+
+			window.aioseoBus.$emit('do-post-settings-main-tab-change', { name: 'schema' })
+		}
 	},
 	socialPosts : {
 		slug    : 'social-posts',

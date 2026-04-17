@@ -1,5 +1,6 @@
 import {
-	usePostEditorStore
+	usePostEditorStore,
+	useTagsStore
 } from '@/vue/stores'
 
 import {
@@ -77,9 +78,10 @@ const getBlockEditorFeaturedMediaId = async (edited = false) => {
 }
 
 /**
- * Returns the edited featured image URL.
+ * Returns the featured image URL from the current editor (Classic, Block, or other).
+ * For the Block Editor, resolves the media ID to its source URL via the post editor store.
  *
- * @returns {string} The featured image
+ * @returns {Promise<string>} The featured image URL, or an empty string if none is set.
  */
 export const getPostEditedFeaturedImage = async () => {
 	if (isClassicEditor() || isClassicNoEditor()) {
@@ -88,7 +90,6 @@ export const getPostEditedFeaturedImage = async () => {
 
 	if (isBlockEditor()) {
 		const mediaId = await getBlockEditorFeaturedMediaId(true)
-			.then(id => id)
 
 		if (isNaN(mediaId) || 0 === mediaId) {
 			return ''
@@ -102,4 +103,19 @@ export const getPostEditedFeaturedImage = async () => {
 	}
 
 	return getEditorFeaturedImage()
+}
+
+/**
+ * Resolves the current featured image URL and updates the tags store if it changed.
+ *
+ * @since 4.9.6
+ *
+ * @returns {Promise} Resolves when the update is complete.
+ */
+export const maybeUpdateFeaturedImage = async () => {
+	const url       = await getPostEditedFeaturedImage() || ''
+	const tagsStore = useTagsStore()
+	if (url !== (tagsStore.liveTags.featured_image_url || '')) {
+		tagsStore.updateFeaturedImageUrl(url)
+	}
 }

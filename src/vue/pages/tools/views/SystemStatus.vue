@@ -109,7 +109,7 @@ import {
 	useToolsStore
 } from '@/vue/stores'
 
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import CoreCard from '@/vue/components/common/core/Card'
 import GridColumn from '@/vue/components/common/grid/Column'
 import GridRow from '@/vue/components/common/grid/Row'
@@ -179,7 +179,7 @@ export default {
 			const blob    = new Blob([ JSON.stringify(this.rootStore.aioseo.data.status) ], { type: 'application/json' })
 			const link    = document.createElement('a')
 			link.href     = URL.createObjectURL(blob)
-			link.download = `aioseo-system-status-${DateTime.now().toFormat('yyyy-MM-dd')}.json`
+			link.download = `aioseo-system-status-${dayjs().format('YYYY-MM-DD')}.json`
 			link.click()
 			URL.revokeObjectURL(link.href)
 		},

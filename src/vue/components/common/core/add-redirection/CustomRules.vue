@@ -140,10 +140,9 @@
 					<td colspan="2">
 						<base-button
 							size="small-table"
-							type="black"
+							type="gray"
 							@click="addRule(null)"
 						>
-							<svg-circle-plus />
 							{{ strings.add }}
 						</base-button>
 					</td>
@@ -164,7 +163,7 @@ import {
 	dateStringToLocalJs
 } from '@/vue/utils/date'
 
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 
 import BaseButton from '@/vue/components/common/base/Button'
 import BaseDatePicker from '@/vue/components/common/base/DatePicker'
@@ -173,7 +172,6 @@ import BaseSelect from '@/vue/components/common/base/Select'
 import CoreAlert from '@/vue/components/common/core/alert/Index'
 import CoreTooltip from '@/vue/components/common/core/Tooltip'
 import SvgCircleQuestionMark from '@/vue/components/common/svg/circle/QuestionMark'
-import SvgCirclePlus from '@/vue/components/common/svg/circle/Plus'
 import SvgTrash from '@/vue/components/common/svg/Trash'
 
 import { __ } from '@/vue/plugins/translations'
@@ -201,7 +199,6 @@ export default {
 		CoreAlert,
 		CoreTooltip,
 		SvgCircleQuestionMark,
-		SvgCirclePlus,
 		SvgTrash
 	},
 	props : {
@@ -209,13 +206,12 @@ export default {
 	},
 	data () {
 		return {
-			DateTime,
 			strings : {
 				customRules        : __('Custom Rules', td),
 				customRulesTooltip : __('Custom rules allow you to create redirects based on specific criteria. You can use these rules to redirect users based on their IP address, browser, or other criteria.', td),
 				selectMatchRule    : __('Select Rule', td),
 				delete             : __('Delete', td),
-				add                : __('Add Custom Rule', td),
+				add                : __('Add Another Rule', td),
 				regex              : __('Regex', td),
 				selectAValue       : __('Select a Value or Add a New One', td),
 				key                : __('Key', td),
@@ -468,7 +464,7 @@ export default {
 			this.$emit('redirects-custom-rule-error', hasError)
 		},
 		updateDate (value, dateSchedule, index) {
-			const date = null !== value ? DateTime.fromJSDate(value).toUTC().toString() : ''
+			const date = null !== value ? dayjs(value).utc().format() : ''
 			this.updateRule(dateSchedule, date, index)
 		}
 	},

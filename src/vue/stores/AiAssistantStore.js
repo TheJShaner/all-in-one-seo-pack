@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { allowed } from '@/vue/utils/AIOSEO_VERSION'
+import { defaultFeatureCosts } from '@/vue/composables/AiContent'
 
 import {
 	useOptionsStore
@@ -8,9 +9,8 @@ import {
 
 export const useAiAssistantStore = defineStore('AiAssistantStore', {
 	state : () => ({
-		markdownConverter : null,
-		capability        : 'aioseo_page_ai_content_settings',
-		options           : {
+		capability : 'aioseo_page_ai_content_settings',
+		options    : {
 			input : {
 				userPrompt : {
 					maxlength : 1000
@@ -32,36 +32,10 @@ export const useAiAssistantStore = defineStore('AiAssistantStore', {
 			const optionsStore   = useOptionsStore()
 			const costPerFeature = optionsStore.internalOptions?.internal?.ai?.costPerFeature || {}
 
-			return costPerFeature.aiAssistant || 50
+			return costPerFeature.aiAssistant || defaultFeatureCosts.aiAssistant
 		}
 	},
 	actions : {
-		async initMarkdownConverter () {
-			if (this.markdownConverter) {
-				return
-			}
-
-			const [
-				{ default: MarkdownIt },
-				{ default: markdownItFootnote },
-				{ default: markdownItMark },
-				{ default: markdownItSub },
-				{ default: markdownItSup }
-			] = await Promise.all([
-				import('markdown-it'),
-				import('markdown-it-footnote'),
-				import('markdown-it-mark'),
-				import('markdown-it-sub'),
-				import('markdown-it-sup')
-			])
-
-			this.markdownConverter = new MarkdownIt({ breaks: true })
-				.disable('image')
-				.use(markdownItFootnote)
-				.use(markdownItMark)
-				.use(markdownItSub)
-				.use(markdownItSup)
-		},
 		updateBlockHiddenByUser () {
 			const preferencesStore = window.wp?.data?.select('core/preferences')
 			if (!preferencesStore) {

@@ -12,24 +12,25 @@ let aioseoScoreBtnApp = null,
 
 class PageBuilderIntegration {
 	mountComponent = ({ name, component, rootContainer, data = {}, props = {}, useRouter = false }) => {
-		let app = createApp({
-			name : name,
-			data () {
-				return data
-			},
-			render : () => h(
-				component,
-				{
-					...props
-				}
-			)
-		})
+		let router = null,
+			app    = createApp({
+				name : name,
+				data () {
+					return data
+				},
+				render : () => h(
+					component,
+					{
+						...props
+					}
+				)
+			})
 
 		app = loadPlugins(app)
 		app = loadComponents(app)
 
 		if (useRouter) {
-			const router = createRouter({
+			router = createRouter({
 				history : createWebHistory(),
 				routes  : [
 					{
@@ -44,7 +45,7 @@ class PageBuilderIntegration {
 			router.app = app
 		}
 
-		loadPiniaStores(app)
+		loadPiniaStores(app, router)
 
 		app.mount(rootContainer)
 
@@ -57,33 +58,44 @@ class PageBuilderIntegration {
 		this.metabox           = options?.metabox
 		this.injectStyles      = options?.injectStyles
 
-		this.mount = async () => {
-			const createElement = (tag, attributes) => {
-				const $wrapper = document.createElement(tag)
-				for (const key in attributes) {
-					$wrapper.setAttribute(key, attributes[key])
-				}
-
-				return $wrapper
+		this.createElement = (tag, attributes) => {
+			const $wrapper = document.createElement(tag)
+			for (const key in attributes) {
+				$wrapper.setAttribute(key, attributes[key])
 			}
 
-			if (this.scoreBtn) {
-				if (!this.scoreBtn.node.$wrapper.querySelector(`#${this.scoreBtn.node.attributes.id}`)) {
-					this.scoreBtn.node.$wrapper.insertAdjacentElement('beforeend', createElement(this.scoreBtn.node.tag, this.scoreBtn.node.attributes))
-				}
+			return $wrapper
+		}
 
-				aioseoScoreBtnApp?.unmount()
-				aioseoScoreBtnApp = this.mountComponent({
-					name          : this.scoreBtn.appName,
-					component     : this.scoreBtn.component,
-					rootContainer : this.scoreBtn.node.$wrapper.querySelector(`#${this.scoreBtn.node.attributes.id}`),
-					props         : {
-						onClick () {
-							document.dispatchEvent(new Event('aioseo-pagebuilder-toggle-modal'))
-						}
+		this.mountScoreBtn = () => {
+			if (!this.scoreBtn) {
+				return
+			}
+
+			if (!this.scoreBtn.node.$wrapper.querySelector(`#${this.scoreBtn.node.attributes.id}`)) {
+				const $btn = this.createElement(this.scoreBtn.node.tag, this.scoreBtn.node.attributes)
+				if (this.scoreBtn.node.$after) {
+					this.scoreBtn.node.$after.after($btn)
+				} else {
+					this.scoreBtn.node.$wrapper.insertAdjacentElement('beforeend', $btn)
+				}
+			}
+
+			aioseoScoreBtnApp?.unmount()
+			aioseoScoreBtnApp = this.mountComponent({
+				name          : this.scoreBtn.appName,
+				component     : this.scoreBtn.component,
+				rootContainer : this.scoreBtn.node.$wrapper.querySelector(`#${this.scoreBtn.node.attributes.id}`),
+				props         : {
+					onClick () {
+						document.dispatchEvent(new Event('aioseo-pagebuilder-toggle-modal'))
 					}
-				})
-			}
+				}
+			})
+		}
+
+		this.mount = async () => {
+			this.mountScoreBtn()
 
 			if (this.limitModifiedDate) {
 				const mountLimitModifiedDate = ($wrapper) => {
@@ -92,9 +104,9 @@ class PageBuilderIntegration {
 					}
 
 					if (!$wrapper.querySelector(`#${this.limitModifiedDate.node.attributes.id}`)) {
-						$wrapper.insertAdjacentElement('beforeend', createElement(this.limitModifiedDate.node.tag, {
+						$wrapper.insertAdjacentElement('beforeend', this.createElement(this.limitModifiedDate.node.tag, {
 							...this.limitModifiedDate.node.attributes,
-							class : this.limitModifiedDate.node.attributes?.class || $wrapper.querySelector('[role="menuitem"]')?.classList.value
+							class : this.limitModifiedDate.node.attributes?.class ?? $wrapper.querySelector('[role="menuitem"]')?.classList.value
 						}))
 					}
 
@@ -119,10 +131,10 @@ class PageBuilderIntegration {
 				aioseoModalApp = this.mountComponent({
 					name          : this.metabox.appName,
 					component     : this.metabox.component,
-					rootContainer : '#aioseo-modal-portal',
+					rootContainer : this.metabox.rootContainer || '#aioseo-modal-portal',
 					data          : {
 						tableContext  : window.aioseo.currentPost.context,
-						screenContext : 'metabox'
+						screenContext : this.metabox.screenContext || 'metabox'
 					},
 					useRouter : true
 				})

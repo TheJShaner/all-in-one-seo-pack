@@ -91,7 +91,7 @@ import {
 } from '@/vue/stores'
 
 import license from '@/vue/utils/license'
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 
 import { useGoogleSearchConsole } from '@/vue/composables/GoogleSearchConsole'
 
@@ -201,11 +201,11 @@ export default {
 		},
 		getOriginalMaxDate () {
 			if (!this.searchStatisticsStore.latestAvailableDate) {
-				return DateTime.local().plus({ days: -2 })
+				return dayjs().subtract(2, 'day')
 			}
 
-			return DateTime.fromFormat(this.searchStatisticsStore.latestAvailableDate, 'yyyy-MM-dd').setZone(DateTime.zone) ||
-				DateTime.local().plus({ days: -2 })
+			return dayjs(this.searchStatisticsStore.latestAvailableDate, 'YYYY-MM-DD').tz(dayjs.tz.guess()) ||
+				dayjs().subtract(2, 'day')
 		},
 		datepickerShortcuts () {
 			return [
@@ -213,21 +213,21 @@ export default {
 					text  : __('Last 7 Days', td),
 					value : () => {
 						window.aioseoBus.$emit('rolling', 'last7Days')
-						return [ this.getOriginalMaxDate.plus({ days: -6 }).toJSDate(), this.getOriginalMaxDate.toJSDate() ]
+						return [ this.getOriginalMaxDate.subtract(6, 'day').toDate(), this.getOriginalMaxDate.toDate() ]
 					}
 				},
 				{
 					text  : __('Last 28 Days', td),
 					value : () => {
 						window.aioseoBus.$emit('rolling', 'last28Days')
-						return [ this.getOriginalMaxDate.plus({ days: -27 }).toJSDate(), this.getOriginalMaxDate.toJSDate() ]
+						return [ this.getOriginalMaxDate.subtract(27, 'day').toDate(), this.getOriginalMaxDate.toDate() ]
 					}
 				},
 				{
 					text  : __('Last 3 Months', td),
 					value : () => {
 						window.aioseoBus.$emit('rolling', 'last3Months')
-						return [ this.getOriginalMaxDate.plus({ days: -89 }).toJSDate(), this.getOriginalMaxDate.toJSDate() ]
+						return [ this.getOriginalMaxDate.subtract(89, 'day').toDate(), this.getOriginalMaxDate.toDate() ]
 					}
 				}
 			]
@@ -292,8 +292,8 @@ export default {
 	mounted () {
 		// GSC only gives us data for a max of 16 months.
 		// This means that we can't allow the user to select a date range that is more than 16 months.
-		this.minDate = DateTime.now().plus({ months: -16 }).toJSDate()
-		this.maxDate = this.getOriginalMaxDate.toJSDate()
+		this.minDate = dayjs().subtract(16, 'month').toDate()
+		this.maxDate = this.getOriginalMaxDate.toDate()
 
 		// Preload all route components in the background
 		const preloadComponents = () => {

@@ -123,7 +123,8 @@ import {
 	useAiStore,
 	useLicenseStore,
 	useRootStore,
-	useOptionsStore
+	useOptionsStore,
+	useSensitiveOptionsStore
 } from '@/vue/stores'
 
 import { popup } from '@/vue/utils/popup'
@@ -148,10 +149,11 @@ const refreshing                    = ref(false)
 const showDisconnectModal           = ref(false)
 const error                         = ref(null)
 
-const aiStore      = useAiStore()
-const licenseStore = useLicenseStore()
-const rootStore    = useRootStore()
-const optionsStore = useOptionsStore()
+const aiStore                = useAiStore()
+const licenseStore           = useLicenseStore()
+const rootStore              = useRootStore()
+const optionsStore           = useOptionsStore()
+const sensitiveOptionsStore  = useSensitiveOptionsStore()
 
 const isConnected = computed(() => {
 	const ai = optionsStore.internalOptions.internal.ai
@@ -161,7 +163,7 @@ const isConnected = computed(() => {
 		return true
 	}
 
-	return (ai?.hasAccessToken || ai?.isManuallyConnected) && !ai?.isTrialAccessToken
+	return (sensitiveOptionsStore.hasAiAccessToken || ai?.isManuallyConnected) && !ai?.isTrialAccessToken
 })
 
 const upgradeUrl = computed(() => {

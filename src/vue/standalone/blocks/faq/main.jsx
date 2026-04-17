@@ -1,6 +1,7 @@
 import { registerBlock } from '../utils'
 
 import { generateUniqueSchemaBlockId } from '@/vue/standalone/blocks/utils'
+import { getEditorDocument } from '@/vue/utils/editor'
 
 import icon from './icon'
 import metadata from './block.json'
@@ -110,7 +111,7 @@ export const settings = {
 		}
 
 		useEffect(() => {
-			if (!schemaBlockId || 1 < (document.querySelectorAll(`[data-schema-block-id='${schemaBlockId}']`) || []).length) {
+			if (!schemaBlockId || 1 < (getEditorDocument().querySelectorAll(`[data-schema-block-id='${schemaBlockId}']`) || []).length) {
 				// Set a unique ID so that we can use this to track updates and deletes.
 				setSchemaBlockAttributes({ schemaBlockId: generateUniqueSchemaBlockId() })
 			}

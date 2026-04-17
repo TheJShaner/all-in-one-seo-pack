@@ -20,7 +20,7 @@
 
 <script>
 import numbers from '@/vue/utils/numbers'
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 import { defineAsyncComponent } from 'vue'
 
 import { __, sprintf } from '@/vue/plugins/translations'
@@ -123,7 +123,7 @@ export default {
 					x       : {
 						show      : true,
 						formatter : (seriesName) => {
-							return DateTime.fromFormat(seriesName, 'yyyy-MM').setZone(DateTime.zone).toLocaleString({ month: 'long', year: 'numeric' })
+							return dayjs(seriesName, 'YYYY-MM').format('MMMM YYYY')
 						}
 					},
 					y : {

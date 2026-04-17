@@ -49,6 +49,16 @@ export const observeElement = params => {
 				: fullSiteEditor.contentWindow.document.querySelector(params.selector)
 		}
 
+		// Also look inside the post editor iframe (WP 7.0+).
+		if (!el) {
+			const editorIframe = document.querySelector('iframe[name="editor-canvas"]')
+			if (editorIframe?.contentDocument) {
+				el = params.id
+					? editorIframe.contentDocument.getElementById(params.id)
+					: editorIframe.contentDocument.querySelector(params.selector)
+			}
+		}
+
 		if (el) {
 			if (!params.loop) {
 				obs.disconnect()
@@ -64,6 +74,15 @@ export const observeElement = params => {
 		subtree   : !!params.subtree || !params.parent,
 		childList : true
 	})
+
+	// Also observe inside the post editor iframe for mutations (WP 7.0+).
+	const editorIframe = document.querySelector('iframe[name="editor-canvas"]')
+	if (editorIframe?.contentDocument?.body) {
+		observer.observe(editorIframe.contentDocument.body, {
+			subtree   : true,
+			childList : true
+		})
+	}
 }
 
 export const isUrl = url => {

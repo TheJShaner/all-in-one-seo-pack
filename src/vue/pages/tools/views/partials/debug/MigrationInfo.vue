@@ -17,7 +17,7 @@ import {
 	useOptionsStore
 } from '@/vue/stores'
 
-import { DateTime } from 'luxon'
+import dayjs from '@/vue/utils/dayjs'
 
 export default {
 	setup () {
@@ -35,7 +35,7 @@ export default {
 				{
 					label : 'First Activated',
 					value : 0 !== this.optionsStore.internalOptions.internal.firstActivated
-						? DateTime.fromMillis(this.optionsStore.internalOptions.internal.firstActivated * 1000).toFormat('MMMM d, yyyy')
+						? dayjs(this.optionsStore.internalOptions.internal.firstActivated * 1000).format('MMMM D, YYYY')
 						: false
 				}
 			]

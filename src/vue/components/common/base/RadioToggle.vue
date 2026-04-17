@@ -13,14 +13,14 @@
 				type="radio"
 				@input="$emit('update:modelValue', option.value)"
 				:checked="option.value === modelValue"
-				:disabled="disabled"
+				:disabled="disabled || option.disabled"
 			/>
 
 			<label
 				:for="`id_${name}_${index}`"
 				:class="[
 					{ [option.activeClass || 'default']: option.value === modelValue  },
-					{ disabled: disabled }
+					{ disabled: disabled || option.disabled }
 				]"
 			>
 				<slot :name="option.slot">

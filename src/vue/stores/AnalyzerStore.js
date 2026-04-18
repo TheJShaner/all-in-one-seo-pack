@@ -188,7 +188,7 @@ export const useAnalyzerStore = defineStore('AnalyzerStore', {
 				})
 				.then(response => {
 					const optionsStore = useOptionsStore()
-					optionsStore.updateOption('internalOptions', { groups: [ 'internal', 'siteAnalysis' ], key: 'headlines', value: response.body })
+					optionsStore.updateOption('internalOptions', { groups: [ 'internal', 'headlineAnalysis' ], key: 'headlines', value: response.body })
 					this.analyzing = false
 				})
 		},
